@@ -1,0 +1,264 @@
+@import 'tailwindcss';
+
+@plugin 'tailwindcss-animate';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans:
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar-background);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
+:root {
+    /* Paleta de marca: turquesa (del logo/PDF) + grises azulados (slate), en vez de la
+       escala de grises puros por defecto. */
+    --background: hsl(0, 0%, 100%);
+    --foreground: hsl(222, 47%, 11%);
+    --card: hsl(0, 0%, 100%);
+    --card-foreground: hsl(222, 47%, 11%);
+    --popover: hsl(0, 0%, 100%);
+    --popover-foreground: hsl(222, 47%, 11%);
+    --primary: hsl(175, 77%, 26%);
+    --primary-foreground: hsl(0, 0%, 100%);
+    --secondary: hsl(210, 40%, 96%);
+    --secondary-foreground: hsl(222, 47%, 11%);
+    --muted: hsl(210, 40%, 96%);
+    --muted-foreground: hsl(215, 19%, 35%);
+    --accent: hsl(166, 76%, 97%);
+    --accent-foreground: hsl(175, 77%, 26%);
+    --destructive: hsl(0, 84.2%, 60.2%);
+    --destructive-foreground: hsl(0, 0%, 98%);
+    --border: hsl(214, 32%, 91%);
+    --input: hsl(214, 32%, 91%);
+    --ring: hsl(175, 77%, 26%);
+    --chart-1: hsl(175, 77%, 26%);
+    --chart-2: hsl(173, 58%, 39%);
+    --chart-3: hsl(197, 37%, 24%);
+    --chart-4: hsl(43, 74%, 66%);
+    --chart-5: hsl(27, 87%, 67%);
+    --radius: 0.75rem;
+    --sidebar-background: hsl(210, 40%, 95%);
+    --sidebar-foreground: hsl(215, 25%, 27%);
+    --sidebar-primary: hsl(175, 77%, 26%);
+    --sidebar-primary-foreground: hsl(0, 0%, 100%);
+    --sidebar-accent: hsl(166, 76%, 97%);
+    --sidebar-accent-foreground: hsl(175, 77%, 26%);
+    --sidebar-border: hsl(214, 32%, 91%);
+    --sidebar-ring: hsl(175, 77%, 26%);
+}
+
+.dark {
+    --background: hsl(0, 0%, 3.9%);
+    --foreground: hsl(0, 0%, 98%);
+    --card: hsl(0, 0%, 3.9%);
+    --card-foreground: hsl(0, 0%, 98%);
+    --popover: hsl(0, 0%, 3.9%);
+    --popover-foreground: hsl(0, 0%, 98%);
+    --primary: hsl(0, 0%, 98%);
+    --primary-foreground: hsl(0, 0%, 9%);
+    --secondary: hsl(0, 0%, 14.9%);
+    --secondary-foreground: hsl(0, 0%, 98%);
+    --muted: hsl(0, 0%, 6.9%);
+    --muted-foreground: hsl(0, 0%, 63.9%);
+    --accent: hsl(0, 0%, 14.9%);
+    --accent-foreground: hsl(0, 0%, 98%);
+    --destructive: hsl(0, 84%, 60%);
+    --destructive-foreground: hsl(0, 0%, 98%);
+    --border: hsl(0, 0%, 14.9%);
+    --input: hsl(0, 0%, 14.9%);
+    --ring: hsl(0, 0%, 83.1%);
+    --chart-1: hsl(220, 70%, 50%);
+    --chart-2: hsl(160, 60%, 45%);
+    --chart-3: hsl(30, 80%, 55%);
+    --chart-4: hsl(280, 65%, 60%);
+    --chart-5: hsl(340, 75%, 55%);
+    --sidebar-background: hsl(0, 0%, 7%);
+    --sidebar-foreground: hsl(0, 0%, 80%);
+    --sidebar-primary: hsl(360, 100%, 100%);
+    --sidebar-primary-foreground: hsl(0, 0%, 100%);
+    --sidebar-accent: hsl(0, 0%, 15.9%);
+    --sidebar-accent-foreground: hsl(240, 4.8%, 95.9%);
+    --sidebar-border: hsl(0, 0%, 15.9%);
+    --sidebar-ring: hsl(217.2, 91.2%, 59.8%);
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+}
+
+/* FullCalendar trae su propio tema (azul marino oscuro) independiente de las
+   variables de arriba; se sobreescribe para que combine con el resto de la app. */
+.fc {
+    --fc-button-text-color: #334155;
+    --fc-button-bg-color: #ffffff;
+    --fc-button-border-color: #e2e8f0;
+    --fc-button-hover-bg-color: #f0fdfa;
+    --fc-button-hover-border-color: #ccfbf1;
+    --fc-button-active-bg-color: #ccfbf1;
+    --fc-button-active-border-color: #5eead4;
+    --fc-border-color: #e2e8f0;
+    --fc-neutral-bg-color: #f8fafc;
+    --fc-today-bg-color: rgba(13, 148, 136, 0.06);
+    --fc-page-bg-color: #ffffff;
+    font-family: inherit;
+}
+
+/* Botones: un poco más de aire y esquinas más suaves que el default de FullCalendar. */
+.fc .fc-button {
+    padding: 0.5em 0.9em;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    box-shadow: none !important;
+}
+.fc .fc-button-group > .fc-button:not(:first-child) {
+    margin-left: -1px;
+}
+.fc .fc-toolbar-title {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* Encabezados de día: nombre del día en mayúsculas y sutil, número de fecha destacado. */
+.fc .fc-col-header-cell {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+.fc .fc-col-header-cell-cushion {
+    padding: 8px 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+.fc .fc-day-today .fc-col-header-cell-cushion {
+    color: #0f766e;
+}
+.fc .fc-daygrid-day-number {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    color: #334155;
+}
+.fc .fc-day-today .fc-daygrid-day-number {
+    color: #0f766e;
+    font-weight: 700;
+}
+
+/* Franjas horarias: se insinúa que son clicables para agendar. */
+.fc .fc-timegrid-slot-lane:hover {
+    background-color: rgba(13, 148, 136, 0.05);
+    cursor: pointer;
+}
+.fc .fc-daygrid-day-frame:hover {
+    background-color: rgba(13, 148, 136, 0.04);
+    cursor: pointer;
+}
+
+/* Eventos: pastillas redondeadas con sombra suave en vez del bloque plano por defecto. */
+.fc .fc-timegrid-event,
+.fc .fc-daygrid-event {
+    border-radius: 0.5rem;
+    border-width: 0;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+    padding: 1px 2px;
+}
+.fc .fc-timegrid-event .fc-event-main {
+    padding: 4px 6px;
+}
+.fc .fc-event-title {
+    font-weight: 600;
+}
+.fc .fc-event-time {
+    font-weight: 500;
+    opacity: 0.9;
+}
+.fc .fc-timegrid-now-indicator-line {
+    border-color: #e11d48;
+}
+.fc .fc-timegrid-now-indicator-arrow {
+    border-color: #e11d48;
+    color: #e11d48;
+}
+
+/* Franjas de agenda abierta del doctor: rótulo discreto arriba a la izquierda. */
+.fc .fc-timegrid-col.fc-day-today {
+    background-color: rgba(13, 148, 136, 0.03);
+}
+.fc-theme-standard .fc-scrollgrid {
+    border-color: #e2e8f0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
