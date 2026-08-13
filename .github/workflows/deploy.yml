@@ -1,0 +1,57 @@
+name: Build y actualizar rama production
+
+# Cada push a main compila vendor/ (PHP) y public/build (assets) en Linux
+# y los empuja a la rama `production`, que es la que cPanel despliega.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # permite lanzarlo manualmente desde la pestaña Actions
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configurar PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, gd, zip, bcmath, pdo_mysql, fileinfo, intl, exif
+          tools: composer:v2
+          coverage: none
+
+      - name: Instalar dependencias PHP (producción)
+        run: composer install --optimize-autoloader --no-dev --no-interaction --prefer-dist --no-progress
+
+      - name: Configurar Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Compilar assets (Vite)
+        run: |
+          npm ci
+          npm run build
+
+      - name: Empujar build a la rama production
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Recrea production a partir de main + artefactos compilados
+          git checkout -B production
+          git add -f vendor public/build
+          git add -A
+          git commit -m "Build automático desde ${GITHUB_SHA::7}" || echo "Sin cambios que compilar"
+          git push -f origin production
