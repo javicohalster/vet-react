@@ -12,13 +12,13 @@ permissions:
 
 concurrency:
   group: deploy-production
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main
+      - name: Checkout completo (main + production)
         uses: actions/checkout@v4
         with:
           ref: main
@@ -32,8 +32,17 @@ jobs:
           tools: composer:v2
           coverage: none
 
+      - name: Preparar .env temporal para el build
+        run: |
+          cp .env.example .env
+          # APP_KEY temporal solo para que artisan funcione durante el build;
+          # el APP_KEY real vive en el .env del servidor, no se sube al repo.
+
       - name: Instalar dependencias PHP (producción)
         run: composer install --optimize-autoloader --no-dev --no-interaction --prefer-dist --no-progress
+
+      - name: Generar APP_KEY temporal
+        run: php artisan key:generate
 
       - name: Configurar Node 20
         uses: actions/setup-node@v4
@@ -45,13 +54,22 @@ jobs:
           npm ci
           npm run build
 
-      - name: Empujar build a la rama production
+      - name: Empujar build a la rama production (fast-forward, sin reescribir historia)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Recrea production a partir de main + artefactos compilados
-          git checkout -B production
+          # Partimos de la production EXISTENTE para conservar el historial
+          # (así cPanel puede hacer "Update from Remote" con fast-forward limpio).
+          git fetch origin production || true
+          if git show-ref --verify --quiet refs/remotes/origin/production; then
+            git checkout -B production origin/production
+          else
+            git checkout -B production
+          fi
+          # Sincronizamos el CÓDIGO con main sin borrar el historial de production
+          git checkout main -- .
           git add -f vendor public/build
           git add -A
           git commit -m "Build automático desde ${GITHUB_SHA::7}" || echo "Sin cambios que compilar"
-          git push -f origin production
+          # push normal (sin -f): siempre es descendiente de production anterior
+          git push origin production
