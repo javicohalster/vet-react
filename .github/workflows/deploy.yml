@@ -32,8 +32,17 @@ jobs:
           tools: composer:v2
           coverage: none
 
+      - name: Preparar .env temporal para el build
+        run: |
+          cp .env.example .env
+          # APP_KEY temporal solo para que artisan funcione durante el build;
+          # el APP_KEY real vive en el .env del servidor, no se sube al repo.
+
       - name: Instalar dependencias PHP (producción)
         run: composer install --optimize-autoloader --no-dev --no-interaction --prefer-dist --no-progress
+
+      - name: Generar APP_KEY temporal
+        run: php artisan key:generate
 
       - name: Configurar Node 20
         uses: actions/setup-node@v4
