@@ -245,6 +245,13 @@
     font-weight: 500;
     opacity: 0.9;
 }
+/* Citas muy cortas (heredadas del sistema anterior, a veces de 1 minuto):
+   sin esto, FullCalendar comprime tanto el bloque que el nombre del
+   paciente queda sin espacio para mostrarse. No afecta la hora real
+   guardada, solo el alto visual de la barra en el calendario. */
+.fc .fc-timegrid-event-harness {
+    min-height: 22px;
+}
 .fc .fc-timegrid-now-indicator-line {
     border-color: #e11d48;
 }
