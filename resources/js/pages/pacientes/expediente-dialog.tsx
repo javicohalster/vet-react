@@ -54,7 +54,7 @@ export function EspedienteDialog({ pacienteId, onClose }: { pacienteId: number |
             <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>
-                        Expediente clínico {paciente ? `— ${paciente.nombres} (N° ${paciente.id}) / ${paciente.apellidos}` : ''}
+                        Expediente clínico {paciente ? `— N° ${paciente.id} · ${paciente.nombres} / ${paciente.apellidos}` : ''}
                     </DialogTitle>
                 </DialogHeader>
 
