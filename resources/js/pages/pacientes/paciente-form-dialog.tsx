@@ -197,7 +197,7 @@ export function PacienteFormDialog({ abierto, alCerrar, paciente, razas }: Pacie
                             <InputError message={errores.esterilizado} />
                         </div>
 
-                        <Campo label="Peso (Kg.)" tipo="number" value={campos.peso} onChange={set('peso')} error={errores.peso} />
+                        <Campo label="Peso (Kg.)" tipo="number" step="0.01" value={campos.peso} onChange={set('peso')} error={errores.peso} />
                         <Campo label="Altura" value={campos.altura} onChange={set('altura')} error={errores.altura} />
 
                         <div className="grid gap-1.5 sm:col-span-2">
@@ -222,14 +222,20 @@ export function PacienteFormDialog({ abierto, alCerrar, paciente, razas }: Pacie
 }
 
 function Campo({
-    label, value, onChange, error, tipo = 'text',
+    label, value, onChange, error, tipo = 'text', step,
 }: {
-    label: string; value: string; onChange: (valor: string) => void; error?: string; tipo?: string;
+    label: string; value: string; onChange: (valor: string) => void; error?: string; tipo?: string; step?: string;
 }) {
     return (
         <div className="grid gap-1.5">
             <Label>{label}</Label>
-            <Input type={tipo} value={value} onChange={(e) => onChange(e.target.value)} />
+            <Input
+                type={tipo}
+                inputMode={tipo === 'number' ? 'decimal' : undefined}
+                step={step}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+            />
             <InputError message={error} />
         </div>
     );

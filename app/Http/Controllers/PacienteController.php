@@ -244,7 +244,7 @@ class PacienteController extends Controller
             'genero' => ['required', 'string', 'max:191'],
             'raza' => ['nullable', 'string', 'max:191'],
             'color' => ['nullable', 'string', 'max:500'],
-            'peso' => ['nullable', 'integer'],
+            'peso' => ['nullable', 'numeric', 'min:0', 'max:9999.99'],
             'altura' => ['nullable', 'string', 'max:191'],
             'esterilizado' => ['nullable', 'string', 'max:191'],
             'especie' => ['nullable', 'string', 'max:191'],
