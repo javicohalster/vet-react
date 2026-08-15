@@ -145,8 +145,12 @@ export function CitaFormDialog({ abierto, alCerrar, cita, fechaPreseleccionada, 
 
     return (
         <>
-            <Dialog open={abierto} onOpenChange={(valor) => !valor && alCerrar()}>
-                <DialogContent className="sm:max-w-lg">
+            <Dialog modal={false} open={abierto} onOpenChange={(valor) => !valor && alCerrar()}>
+                <DialogContent
+                    className="sm:max-w-lg"
+                    onInteractOutside={(e) => e.preventDefault()}
+                    onPointerDownOutside={(e) => e.preventDefault()}
+                >
                     <DialogHeader>
                         <DialogTitle>{esEdicion ? 'Editar cita' : 'Nueva cita'}</DialogTitle>
                     </DialogHeader>
