@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Mail\RecordatorioCita;
+use App\Models\ConsultaVacuna;
 use App\Models\Query;
 use App\Models\Unity;
 use Illuminate\Console\Command;
@@ -69,6 +70,31 @@ class EnviarRecordatorios extends Command
                 Log::info("Recordatorio ({$motivo}) enviado a {$paciente->email} — consulta #{$consulta->id}");
                 $enviados++;
             }
+        }
+
+        // Vacunas registradas en `consulta_vacunas` (una consulta puede tener
+        // varias); esta fecha sí es una columna `date` real, sin el problema
+        // de formatos mixtos de las de arriba.
+        $vacunas = ConsultaVacuna::whereDate('fecha_siguiente_vacuna', Carbon::tomorrow())
+            ->with('consulta.paciente:id,nombres,apellidos,email')
+            ->get();
+
+        foreach ($vacunas as $vacuna) {
+            $paciente = $vacuna->consulta?->paciente;
+            if (! $paciente || ! $paciente->email) {
+                continue;
+            }
+
+            Mail::to($paciente->email)->send(new RecordatorioCita(
+                paciente: $paciente->nombres,
+                propietario: $paciente->apellidos,
+                motivo: 'una vacuna',
+                fecha: $fechaLegible,
+                clinica: $clinica,
+            ));
+
+            Log::info("Recordatorio (una vacuna) enviado a {$paciente->email} — consulta_vacuna #{$vacuna->id}");
+            $enviados++;
         }
 
         $this->info("Recordatorios enviados: {$enviados}");
