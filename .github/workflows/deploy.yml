@@ -2,6 +2,14 @@ name: Build y actualizar rama production
 
 # Cada push a main compila vendor/ (PHP) y public/build (assets) en Linux
 # y los empuja a la rama `production`, que es la que cPanel despliega.
+#
+# IMPORTANTE: el build (composer install / npm run build) debe correr
+# DESPUÉS de cambiar a la rama `production`, no antes. Si se compila
+# estando en `main` y luego se hace `git checkout production`, ese cambio
+# de rama restaura los archivos viejos que `production` tenía trackeados
+# (incluido manifest.json), pisando el build recién hecho aunque el
+# commit se vea "exitoso". (Nos pasó: el CSS quedaba huérfano en el repo
+# pero el manifest seguía apuntando al archivo viejo.)
 on:
   push:
     branches: [main]
@@ -23,6 +31,21 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+
+      - name: Cambiar a production y traer el código de main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin production || true
+          if git show-ref --verify --quiet refs/remotes/origin/production; then
+            git checkout -B production origin/production
+          else
+            git checkout -B production
+          fi
+          # Sincronizamos el CÓDIGO con main sin borrar el historial de production
+          git checkout main -- .
+          # Limpieza defensiva: nada debe quedar del build anterior antes de compilar
+          rm -rf public/build vendor
 
       - name: Configurar PHP 8.4
         uses: shivammathur/setup-php@v2
@@ -54,20 +77,8 @@ jobs:
           npm ci
           npm run build
 
-      - name: Empujar build a la rama production (fast-forward, sin reescribir historia)
+      - name: Empujar build a production (fast-forward, sin reescribir historia)
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Partimos de la production EXISTENTE para conservar el historial
-          # (así cPanel puede hacer "Update from Remote" con fast-forward limpio).
-          git fetch origin production || true
-          if git show-ref --verify --quiet refs/remotes/origin/production; then
-            git checkout -B production origin/production
-          else
-            git checkout -B production
-          fi
-          # Sincronizamos el CÓDIGO con main sin borrar el historial de production
-          git checkout main -- .
           git add -f vendor public/build
           git add -A
           git commit -m "Build automático desde ${GITHUB_SHA::7}" || echo "Sin cambios que compilar"
