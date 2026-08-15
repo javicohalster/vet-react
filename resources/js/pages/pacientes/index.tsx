@@ -51,6 +51,7 @@ export default function PacientesIndex({ pacientes, filtros, razas }: PacientesI
     const [eliminarId, setEliminarId] = useState<number | null>(null);
 
     const columnas: Column<PacienteFila>[] = [
+        { key: 'id', label: 'N° Historia Clínica' },
         { key: 'rut', label: 'CI' },
         { key: 'nombres', label: 'Paciente' },
         { key: 'apellidos', label: 'Propietario' },
@@ -105,7 +106,7 @@ export default function PacientesIndex({ pacientes, filtros, razas }: PacientesI
                     columnas={columnas}
                     url="/pacientes"
                     busqueda={filtros.buscar}
-                    placeholderBusqueda="Buscar por nombre, propietario, CI o chip..."
+                    placeholderBusqueda="Buscar por N° historia clínica, nombre, propietario, CI o chip..."
                     mensajeVacio="No se encontraron pacientes."
                 />
             </div>

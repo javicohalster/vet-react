@@ -176,7 +176,8 @@ class PacienteController extends Controller
                 ->orWhere('apellidos', 'like', "%{$termino}%")
                 ->orWhere('rut', 'like', "%{$termino}%")
                 ->orWhere('chip', 'like', "%{$termino}%")
-                ->orWhere('telefono', 'like', "%{$termino}%");
+                ->orWhere('telefono', 'like', "%{$termino}%")
+                ->orWhere('id', 'like', "%{$termino}%");
         });
     }
 
