@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ConsultaVacuna;
 use App\Models\Query;
 use App\Models\User;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -85,6 +87,7 @@ class ConsultaController extends Controller
             'especialidad_id' => $consulta->speciality_id,
             'visitas' => $visitas,
             'atencion' => $this->camposAtencion($consulta),
+            'vacunas' => $this->listaVacunas($consulta),
         ]);
     }
 
@@ -107,11 +110,15 @@ class ConsultaController extends Controller
             'fecharegistra' => ['nullable', 'string', 'max:50'],
             'fechasiguientecita' => ['nullable', 'string', 'max:50'],
 
-            // Vacunación
-            'fechavacuna' => ['nullable', 'string', 'max:50'],
-            'tipovacuna' => ['nullable', 'string', 'max:150'],
-            'diasrevacuna' => ['nullable', 'integer'],
-            'fechavacunasiguiente' => ['nullable', 'string', 'max:50'],
+            // Vacunación: ahora una lista (una consulta puede tener varias vacunas).
+            // Los 4 campos sueltos de arriba (fechavacuna, tipovacuna, etc.) se
+            // conservan en la tabla `queries` solo por compatibilidad con
+            // consultas antiguas; ya no se editan desde este formulario.
+            'vacunas' => ['nullable', 'array'],
+            'vacunas.*.fecha_vacuna' => ['nullable', 'date'],
+            'vacunas.*.tipo_vacuna' => ['nullable', 'string', 'max:150'],
+            'vacunas.*.dias_revacunar' => ['nullable', 'integer', 'min:0'],
+            'vacunas.*.fecha_siguiente_vacuna' => ['nullable', 'date'],
 
             // Desparasitación
             'fechadesparasitacion' => ['nullable', 'string', 'max:50'],
@@ -143,10 +150,24 @@ class ConsultaController extends Controller
             'recetahospitalizar' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $vacunas = $datos['vacunas'] ?? [];
+        unset($datos['vacunas']);
+
+        // La fecha siguiente se recalcula siempre en el servidor a partir de
+        // fecha + días, para no depender de que el navegador la haya
+        // calculado bien (y por si se manda por otra vía en el futuro).
+        if (! empty($datos['fechadesparasitacion']) && $datos['diasdesparacitar'] ?? null) {
+            $datos['fechasigueintedesparasitacion'] = Carbon::parse($datos['fechadesparasitacion'])
+                ->addDays((int) $datos['diasdesparacitar'])
+                ->format('Y-m-d');
+        }
+
         $consulta->fill($datos);
         $consulta->estado = Query::ESTADO_ATENDIDO;
         $consulta->color = Query::COLOR_ATENDIDO;
         $consulta->save();
+
+        $this->sincronizarVacunas($consulta, $vacunas);
 
         return back()->with('success', 'La consulta médica se ha guardado exitosamente.');
     }
@@ -159,6 +180,74 @@ class ConsultaController extends Controller
     }
 
     // -----------------------------------------------------------------
+
+    /**
+     * Reemplaza las vacunas de la consulta por la lista recibida. Ignora
+     * filas en blanco (el usuario abrió una fila con "+ Agregar vacuna" y no
+     * la llenó) y recalcula la fecha siguiente en el servidor.
+     *
+     * @param  array<int, array<string, mixed>>  $vacunas
+     */
+    private function sincronizarVacunas(Query $consulta, array $vacunas): void
+    {
+        $consulta->vacunas()->delete();
+
+        foreach ($vacunas as $vacuna) {
+            $fecha = $vacuna['fecha_vacuna'] ?? null;
+            $tipo = $vacuna['tipo_vacuna'] ?? null;
+
+            if (! $fecha && ! $tipo) {
+                continue; // fila vacía, no se guarda
+            }
+
+            $dias = isset($vacuna['dias_revacunar']) && $vacuna['dias_revacunar'] !== ''
+                ? (int) $vacuna['dias_revacunar']
+                : null;
+
+            $fechaSiguiente = $fecha && $dias
+                ? Carbon::parse($fecha)->addDays($dias)->toDateString()
+                : ($vacuna['fecha_siguiente_vacuna'] ?? null);
+
+            ConsultaVacuna::create([
+                'query_id' => $consulta->id,
+                'fecha_vacuna' => $fecha,
+                'tipo_vacuna' => $tipo,
+                'dias_revacunar' => $dias,
+                'fecha_siguiente_vacuna' => $fechaSiguiente,
+            ]);
+        }
+    }
+
+    /**
+     * Vacunas de la consulta para mostrar en el formulario. Si la consulta es
+     * de antes de esta función (datos migrados del sistema anterior) y no
+     * tiene filas en la tabla nueva, se muestra su vacuna "suelta" como
+     * primera fila editable, para no perderla de vista.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function listaVacunas(Query $consulta): array
+    {
+        $vacunas = $consulta->vacunas()->orderBy('fecha_vacuna')->get()->map(fn (ConsultaVacuna $v) => [
+            'id' => $v->id,
+            'fecha_vacuna' => $v->fecha_vacuna?->format('Y-m-d'),
+            'tipo_vacuna' => $v->tipo_vacuna,
+            'dias_revacunar' => $v->dias_revacunar,
+            'fecha_siguiente_vacuna' => $v->fecha_siguiente_vacuna?->format('Y-m-d'),
+        ])->all();
+
+        if (empty($vacunas) && ($consulta->tipovacuna || $consulta->fechavacuna)) {
+            $vacunas[] = [
+                'id' => null,
+                'fecha_vacuna' => $consulta->fechavacuna,
+                'tipo_vacuna' => $consulta->tipovacuna,
+                'dias_revacunar' => $consulta->diasrevacuna,
+                'fecha_siguiente_vacuna' => $consulta->fechavacunasiguiente,
+            ];
+        }
+
+        return $vacunas;
+    }
 
     /** Busca por nombre de paciente, propietario o identificación. */
     private function filtrarPorTexto(Builder $query, string $termino): Builder

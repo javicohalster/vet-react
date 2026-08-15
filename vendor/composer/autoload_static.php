@@ -654,6 +654,7 @@ class ComposerStaticInit2e594666b56d0f82768c999e6088d4fb
         'App\\Http\\Requests\\Auth\\LoginRequest' => __DIR__ . '/../..' . '/app/Http/Requests/Auth/LoginRequest.php',
         'App\\Http\\Requests\\Settings\\ProfileUpdateRequest' => __DIR__ . '/../..' . '/app/Http/Requests/Settings/ProfileUpdateRequest.php',
         'App\\Mail\\RecordatorioCita' => __DIR__ . '/../..' . '/app/Mail/RecordatorioCita.php',
+        'App\\Models\\ConsultaVacuna' => __DIR__ . '/../..' . '/app/Models/ConsultaVacuna.php',
         'App\\Models\\Dia' => __DIR__ . '/../..' . '/app/Models/Dia.php',
         'App\\Models\\Laboratorio' => __DIR__ . '/../..' . '/app/Models/Laboratorio.php',
         'App\\Models\\LaboratorioResultado' => __DIR__ . '/../..' . '/app/Models/LaboratorioResultado.php',

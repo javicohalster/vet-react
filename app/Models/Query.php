@@ -130,6 +130,11 @@ class Query extends Model
         return $this->hasMany(Laboratorio::class, 'query_id');
     }
 
+    public function vacunas(): HasMany
+    {
+        return $this->hasMany(ConsultaVacuna::class, 'query_id');
+    }
+
     // -----------------------------------------------------------------
     // Scopes
     // -----------------------------------------------------------------

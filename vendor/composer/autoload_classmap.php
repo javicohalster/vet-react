@@ -37,6 +37,7 @@ return array(
     'App\\Http\\Requests\\Auth\\LoginRequest' => $baseDir . '/app/Http/Requests/Auth/LoginRequest.php',
     'App\\Http\\Requests\\Settings\\ProfileUpdateRequest' => $baseDir . '/app/Http/Requests/Settings/ProfileUpdateRequest.php',
     'App\\Mail\\RecordatorioCita' => $baseDir . '/app/Mail/RecordatorioCita.php',
+    'App\\Models\\ConsultaVacuna' => $baseDir . '/app/Models/ConsultaVacuna.php',
     'App\\Models\\Dia' => $baseDir . '/app/Models/Dia.php',
     'App\\Models\\Laboratorio' => $baseDir . '/app/Models/Laboratorio.php',
     'App\\Models\\LaboratorioResultado' => $baseDir . '/app/Models/LaboratorioResultado.php',

@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import axios from '@/lib/http';
 import { usePermissions } from '@/hooks/use-permissions';
 import { router } from '@inertiajs/react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface DetalleConsulta {
@@ -31,11 +31,40 @@ interface DetalleConsulta {
     especialidad_id: number | null;
     visitas: number;
     atencion: Record<string, string | number | null>;
+    vacunas: Array<{
+        id: number | null;
+        fecha_vacuna: string | null;
+        tipo_vacuna: string | null;
+        dias_revacunar: number | null;
+        fecha_siguiente_vacuna: string | null;
+    }>;
 }
 
 interface DoctorOpcion {
     id: number;
     nombre: string;
+}
+
+interface VacunaFila {
+    id: number | null;
+    fecha_vacuna: string;
+    tipo_vacuna: string;
+    dias_revacunar: string;
+    fecha_siguiente_vacuna: string;
+}
+
+const VACUNA_VACIA: VacunaFila = { id: null, fecha_vacuna: '', tipo_vacuna: '', dias_revacunar: '', fecha_siguiente_vacuna: '' };
+
+/** Suma días a una fecha sin pasar por conversiones de zona horaria. */
+function calcularFechaSiguiente(fecha: string, dias: string): string {
+    if (!fecha || !dias) return '';
+
+    const [anio, mes, dia] = fecha.split('-').map(Number);
+    const base = new Date(anio, mes - 1, dia);
+    base.setDate(base.getDate() + Number(dias));
+
+    const dos = (n: number) => String(n).padStart(2, '0');
+    return `${base.getFullYear()}-${dos(base.getMonth() + 1)}-${dos(base.getDate())}`;
 }
 
 /** Listas fijas heredadas del formulario original (nunca vinieron de una tabla). */
@@ -84,6 +113,7 @@ export function AtenderDialog({ consultaId, onClose }: { consultaId: number | nu
     const [enviando, setEnviando] = useState(false);
     const [errores, setErrores] = useState<Record<string, string>>({});
     const [campos, setCampos] = useState<Record<string, string>>(CAMPOS_INICIALES);
+    const [vacunas, setVacunas] = useState<VacunaFila[]>([]);
     const [doctoresEspecialidad, setDoctoresEspecialidad] = useState<DoctorOpcion[]>([]);
 
     const soloLectura = !can('editar-atender');
@@ -114,6 +144,15 @@ export function AtenderDialog({ consultaId, onClose }: { consultaId: number | nu
                     valores[clave] = valor === null || valor === undefined ? '' : String(valor);
                 });
                 setCampos(valores);
+                setVacunas(
+                    res.data.vacunas.map((v) => ({
+                        id: v.id,
+                        fecha_vacuna: v.fecha_vacuna ?? '',
+                        tipo_vacuna: v.tipo_vacuna ?? '',
+                        dias_revacunar: v.dias_revacunar ? String(v.dias_revacunar) : '',
+                        fecha_siguiente_vacuna: v.fecha_siguiente_vacuna ?? '',
+                    })),
+                );
                 setErrores({});
             })
             .finally(() => setCargando(false));
@@ -121,11 +160,36 @@ export function AtenderDialog({ consultaId, onClose }: { consultaId: number | nu
 
     const set = (clave: string) => (valor: string) => setCampos((prev) => ({ ...prev, [clave]: valor }));
 
+    /** Igual que `set`, pero además recalcula la fecha siguiente de desparasitación. */
+    const setDesparasitacion = (clave: 'fechadesparasitacion' | 'diasdesparacitar') => (valor: string) =>
+        setCampos((prev) => {
+            const actualizado = { ...prev, [clave]: valor };
+            actualizado.fechasigueintedesparasitacion = calcularFechaSiguiente(actualizado.fechadesparasitacion, actualizado.diasdesparacitar);
+            return actualizado;
+        });
+
+    const agregarVacuna = () => setVacunas((prev) => [...prev, { ...VACUNA_VACIA }]);
+
+    const quitarVacuna = (indice: number) => setVacunas((prev) => prev.filter((_, i) => i !== indice));
+
+    const actualizarVacuna = (indice: number, campo: keyof VacunaFila, valor: string) => {
+        setVacunas((prev) =>
+            prev.map((v, i) => {
+                if (i !== indice) return v;
+                const actualizada = { ...v, [campo]: valor };
+                if (campo === 'fecha_vacuna' || campo === 'dias_revacunar') {
+                    actualizada.fecha_siguiente_vacuna = calcularFechaSiguiente(actualizada.fecha_vacuna, actualizada.dias_revacunar);
+                }
+                return actualizada;
+            }),
+        );
+    };
+
     const guardar = () => {
         if (!consultaId) return;
 
         setEnviando(true);
-        router.put(`/consultas/${consultaId}/atender`, campos, {
+        router.put(`/consultas/${consultaId}/atender`, { ...campos, vacunas }, {
             preserveScroll: true,
             onError: (err) => setErrores(err),
             onSuccess: () => onClose(),
@@ -194,21 +258,73 @@ export function AtenderDialog({ consultaId, onClose }: { consultaId: number | nu
                                 <Campo label="Fecha siguiente cita" tipo="date" value={campos.fechasiguientecita} onChange={set('fechasiguientecita')} error={errores.fechasiguientecita} disabled={soloLectura} />
                             </TabsContent>
 
-                            <TabsContent value="vacunacion" className="grid gap-4 sm:grid-cols-2">
-                                <Campo label="Fecha de vacuna" tipo="date" value={campos.fechavacuna} onChange={set('fechavacuna')} error={errores.fechavacuna} disabled={soloLectura} />
-                                <CampoSelect label="Tipo de vacuna" value={campos.tipovacuna} onChange={set('tipovacuna')} error={errores.tipovacuna} disabled={soloLectura} opciones={TIPOS_VACUNA} />
-                                <CampoSelect label="Días para revacunar" value={campos.diasrevacuna} onChange={set('diasrevacuna')} error={errores.diasrevacuna} disabled={soloLectura} opciones={DIAS_REVACUNAR} />
-                                <Campo label="Fecha siguiente vacuna" tipo="date" value={campos.fechavacunasiguiente} onChange={set('fechavacunasiguiente')} error={errores.fechavacunasiguiente} disabled={soloLectura} />
+                            <TabsContent value="vacunacion" className="space-y-4">
+                                {vacunas.length === 0 && (
+                                    <p className="text-sm text-muted-foreground">Este paciente no tiene vacunas registradas en esta consulta.</p>
+                                )}
+
+                                {vacunas.map((vacuna, indice) => (
+                                    <div key={indice} className="grid gap-4 rounded-lg border p-3 sm:grid-cols-2">
+                                        <div className="flex items-center justify-between sm:col-span-2">
+                                            <p className="text-sm font-medium text-muted-foreground">Vacuna {indice + 1}</p>
+                                            {!soloLectura && (
+                                                <Button type="button" size="icon" variant="ghost" className="text-destructive" onClick={() => quitarVacuna(indice)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </div>
+
+                                        <Campo
+                                            label="Fecha de vacuna"
+                                            tipo="date"
+                                            value={vacuna.fecha_vacuna}
+                                            onChange={(v) => actualizarVacuna(indice, 'fecha_vacuna', v)}
+                                            error={errores[`vacunas.${indice}.fecha_vacuna`]}
+                                            disabled={soloLectura}
+                                        />
+                                        <CampoSelect
+                                            label="Tipo de vacuna"
+                                            value={vacuna.tipo_vacuna}
+                                            onChange={(v) => actualizarVacuna(indice, 'tipo_vacuna', v)}
+                                            error={errores[`vacunas.${indice}.tipo_vacuna`]}
+                                            disabled={soloLectura}
+                                            opciones={TIPOS_VACUNA}
+                                        />
+                                        <CampoSelect
+                                            label="Días para revacunar"
+                                            value={vacuna.dias_revacunar}
+                                            onChange={(v) => actualizarVacuna(indice, 'dias_revacunar', v)}
+                                            error={errores[`vacunas.${indice}.dias_revacunar`]}
+                                            disabled={soloLectura}
+                                            opciones={DIAS_REVACUNAR}
+                                        />
+                                        <div className="grid gap-1.5">
+                                            <Label>Fecha siguiente vacuna</Label>
+                                            <Input type="date" value={vacuna.fecha_siguiente_vacuna} disabled className="bg-muted/40" />
+                                            <p className="text-xs text-muted-foreground">Se calcula sola a partir de la fecha y los días para revacunar.</p>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {!soloLectura && (
+                                    <Button type="button" variant="outline" onClick={agregarVacuna}>
+                                        <Plus className="h-4 w-4" /> Agregar vacuna
+                                    </Button>
+                                )}
                             </TabsContent>
 
                             <TabsContent value="desparasitacion" className="grid gap-4 sm:grid-cols-2">
-                                <Campo label="Fecha de desparasitación" tipo="date" value={campos.fechadesparasitacion} onChange={set('fechadesparasitacion')} error={errores.fechadesparasitacion} disabled={soloLectura} />
+                                <Campo label="Fecha de desparasitación" tipo="date" value={campos.fechadesparasitacion} onChange={setDesparasitacion('fechadesparasitacion')} error={errores.fechadesparasitacion} disabled={soloLectura} />
                                 <Campo label="Peso (Kg.)" value={campos.pesodesparasitacion} onChange={set('pesodesparasitacion')} error={errores.pesodesparasitacion} disabled={soloLectura} />
                                 <CampoSelect label="Descripción" value={campos.descripciondesparacitacion} onChange={set('descripciondesparacitacion')} error={errores.descripciondesparacitacion} disabled={soloLectura} opciones={PRODUCTOS_DESPARASITANTE} />
                                 <CampoSelect label="Posología" value={campos.posologia} onChange={set('posologia')} error={errores.posologia} disabled={soloLectura} opciones={POSOLOGIAS} />
                                 <Campo label="Dosis" value={campos.dosis} onChange={set('dosis')} error={errores.dosis} disabled={soloLectura} />
-                                <CampoSelect label="Días a desparasitar" value={campos.diasdesparacitar} onChange={set('diasdesparacitar')} error={errores.diasdesparacitar} disabled={soloLectura} opciones={DIAS_REVACUNAR} />
-                                <Campo label="Fecha siguiente desparasitación" tipo="date" value={campos.fechasigueintedesparasitacion} onChange={set('fechasigueintedesparasitacion')} error={errores.fechasigueintedesparasitacion} disabled={soloLectura} />
+                                <CampoSelect label="Días a desparasitar" value={campos.diasdesparacitar} onChange={setDesparasitacion('diasdesparacitar')} error={errores.diasdesparacitar} disabled={soloLectura} opciones={DIAS_REVACUNAR} />
+                                <div className="grid gap-1.5">
+                                    <Label>Fecha siguiente desparasitación</Label>
+                                    <Input type="date" value={campos.fechasigueintedesparasitacion} disabled className="bg-muted/40" />
+                                    <p className="text-xs text-muted-foreground">Se calcula sola a partir de la fecha y los días a desparasitar.</p>
+                                </div>
                             </TabsContent>
 
                             <TabsContent value="cirugia" className="grid gap-4 sm:grid-cols-2">

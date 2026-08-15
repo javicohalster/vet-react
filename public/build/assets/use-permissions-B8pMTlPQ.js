@@ -1,0 +1,1 @@
+import{K as i}from"./app-B5UToqBH.js";function p(){const{auth:s}=i().props,e=(s==null?void 0:s.permissions)??[],r=(s==null?void 0:s.roles)??[];return{can:(...o)=>o.some(n=>e.includes(n)),is:(...o)=>o.some(n=>r.includes(n)),permissions:e,roles:r,user:(s==null?void 0:s.user)??null}}export{p as u};
