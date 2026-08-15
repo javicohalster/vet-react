@@ -250,10 +250,10 @@
    paciente queda sin espacio para mostrarse. No afecta la hora real
    guardada, solo el alto visual de la barra en el calendario. */
 .fc .fc-timegrid-event-harness {
-    min-height: 22px !important;
+    min-height: 30px !important;
 }
 .fc .fc-timegrid-event-harness .fc-timegrid-event {
-    min-height: 22px !important;
+    min-height: 30px !important;
 }
 .fc .fc-timegrid-now-indicator-line {
     border-color: #e11d48;
