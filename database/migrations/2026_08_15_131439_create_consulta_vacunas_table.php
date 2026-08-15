@@ -17,7 +17,11 @@ return new class extends Migration
     {
         Schema::create('consulta_vacunas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('query_id')->constrained('queries')->cascadeOnDelete();
+            // `queries.id` es int unsigned (heredado del sistema anterior), no
+            // bigint. unsignedInteger() en vez de foreignId() para que el tipo
+            // coincida exactamente y la llave foránea sea válida.
+            $table->unsignedInteger('query_id');
+            $table->foreign('query_id')->references('id')->on('queries')->cascadeOnDelete();
             $table->date('fecha_vacuna')->nullable();
             $table->string('tipo_vacuna', 150)->nullable();
             $table->unsignedInteger('dias_revacunar')->nullable();
