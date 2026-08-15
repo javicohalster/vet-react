@@ -76,6 +76,7 @@ class User extends Authenticatable
             'nacimiento' => 'date',
             'fecha_ult_atencion' => 'date',
             'password' => 'hashed',
+            'peso' => 'decimal:2',
         ];
     }
 
