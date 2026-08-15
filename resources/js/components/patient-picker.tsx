@@ -43,7 +43,7 @@ export function PatientPicker({ value, onChange, placeholder = 'Buscar paciente 
                 .then((res) => setOpciones(res.data))
                 .catch(() => {})
                 .finally(() => setCargando(false));
-        }, 250);
+        }, 500);
 
         return () => {
             clearTimeout(temporizador);
