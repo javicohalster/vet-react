@@ -18,6 +18,20 @@ import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Inicio', href: '/' }];
 
+/**
+ * Formatea una fecha tal como se ve en pantalla, sin convertirla a UTC.
+ * El backend manda las horas "flotantes" (sin zona horaria) a propósito,
+ * así que hay que devolverlas de la misma forma; `.toISOString()` las
+ * desfasaría según la zona horaria del navegador.
+ */
+function aLocalISO(fecha: Date): string {
+    const dos = (n: number) => String(n).padStart(2, '0');
+    return (
+        `${fecha.getFullYear()}-${dos(fecha.getMonth() + 1)}-${dos(fecha.getDate())}` +
+        `T${dos(fecha.getHours())}:${dos(fecha.getMinutes())}:${dos(fecha.getSeconds())}`
+    );
+}
+
 interface DoctorOpcion {
     id: number;
     nombre: string;
@@ -74,9 +88,9 @@ export default function CitasIndex({ doctores, especialidades, resumen }: CitasI
         setFechaSeleccionada(null);
         setCitaSeleccionada({
             id: Number(info.event.id),
-            fecha: info.event.start.toISOString().slice(0, 10),
-            horaInicio: info.event.start.toISOString().slice(11, 16),
-            horaFin: info.event.end ? info.event.end.toISOString().slice(11, 16) : '',
+            fecha: aLocalISO(info.event.start).slice(0, 10),
+            horaInicio: aLocalISO(info.event.start).slice(11, 16),
+            horaFin: info.event.end ? aLocalISO(info.event.end).slice(11, 16) : '',
             pacienteId: props.pacienteId as number,
             pacienteEtiqueta: `${props.paciente} / ${props.doctor ?? ''}`,
             doctorId: props.doctorId as number,
@@ -96,8 +110,8 @@ export default function CitasIndex({ doctores, especialidades, resumen }: CitasI
         router.put(
             `/citas/${info.event.id}/mover`,
             {
-                fecha_inicio: info.event.start.toISOString(),
-                fecha_fin: info.event.end.toISOString(),
+                fecha_inicio: aLocalISO(info.event.start),
+                fecha_fin: aLocalISO(info.event.end),
             },
             {
                 preserveScroll: true,
