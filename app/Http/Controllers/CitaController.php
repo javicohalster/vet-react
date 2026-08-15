@@ -46,8 +46,11 @@ class CitaController extends Controller
             ->map(fn (Query $cita) => [
                 'id' => $cita->id,
                 'title' => trim($cita->paciente?->nombres.' / '.$cita->paciente?->apellidos, ' /'),
-                'start' => $cita->fecha_inicio?->toIso8601String(),
-                'end' => $cita->fecha_fin?->toIso8601String(),
+                // Sin zona horaria a propósito: la hora guardada YA es la hora
+                // real de la clínica. Si se manda con offset, el navegador la
+                // vuelve a convertir a su propia zona y se desfasa.
+                'start' => $cita->fecha_inicio?->format('Y-m-d\TH:i:s'),
+                'end' => $cita->fecha_fin?->format('Y-m-d\TH:i:s'),
                 'color' => $cita->color,
                 'extendedProps' => [
                     'estado' => $cita->estado,
@@ -67,8 +70,8 @@ class CitaController extends Controller
             ->get()
             ->map(fn (Dia $dia) => [
                 'id' => 'dia-'.$dia->id,
-                'start' => $dia->fecha_inicio?->toIso8601String(),
-                'end' => $dia->fecha_fin?->toIso8601String(),
+                'start' => $dia->fecha_inicio?->format('Y-m-d\TH:i:s'),
+                'end' => $dia->fecha_fin?->format('Y-m-d\TH:i:s'),
                 'display' => 'background',
                 'color' => '#ccfbf1',
                 'extendedProps' => ['doctorId' => $dia->doctor_id],
