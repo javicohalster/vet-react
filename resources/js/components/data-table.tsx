@@ -56,6 +56,10 @@ export function DataTable<T extends { id: number }>({
         setTermino(busqueda);
     }, [busqueda]);
 
+    const buscar = (valor: string) => {
+        router.get(url, { ...limpiar(parametros), buscar: valor || undefined }, { preserveState: true, replace: true });
+    };
+
     useEffect(() => {
         if (primeraCarga.current) {
             primeraCarga.current = false;
@@ -66,9 +70,9 @@ export function DataTable<T extends { id: number }>({
             return;
         }
 
-        const temporizador = setTimeout(() => {
-            router.get(url, { ...limpiar(parametros), buscar: termino || undefined }, { preserveState: true, replace: true });
-        }, 350);
+        // Espera a que el usuario haga una pausa real al escribir antes de
+        // buscar, para no lanzar una consulta por cada letra.
+        const temporizador = setTimeout(() => buscar(termino), 600);
 
         return () => clearTimeout(temporizador);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,6 +93,12 @@ export function DataTable<T extends { id: number }>({
                 <Input
                     value={termino}
                     onChange={(e) => setTermino(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            buscar(termino);
+                        }
+                    }}
                     placeholder={placeholderBusqueda}
                     className="pl-8"
                     aria-label="Buscar"
