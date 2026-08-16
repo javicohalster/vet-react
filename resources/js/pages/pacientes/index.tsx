@@ -51,7 +51,7 @@ export default function PacientesIndex({ pacientes, filtros, razas }: PacientesI
     const [eliminarId, setEliminarId] = useState<number | null>(null);
 
     const columnas: Column<PacienteFila>[] = [
-        { key: 'id', label: 'N° Historia Clínica', sortKey: 'id' },
+        { key: 'id', label: 'N° H. Clínica', sortKey: 'id' },
         { key: 'rut', label: 'CI', sortKey: 'rut' },
         { key: 'nombres', label: 'Paciente', sortKey: 'nombres' },
         { key: 'apellidos', label: 'Propietario', sortKey: 'apellidos' },
