@@ -36,7 +36,7 @@ interface ConsultaFila {
 interface ConsultasIndexProps {
     consultas: Paginated<ConsultaFila>;
     pestana: 'pendientes' | 'atendidas';
-    filtros: { buscar: string };
+    filtros: { buscar: string; orden: string; direccion: 'asc' | 'desc' };
     contadores: { pendientes: number; atendidas: number };
 }
 
@@ -50,11 +50,11 @@ export default function ConsultasIndex({ consultas, pestana, filtros, contadores
     };
 
     const columnas: Column<ConsultaFila>[] = [
-        { key: 'fecha', label: 'Fecha' },
-        { key: 'paciente', label: 'Paciente' },
-        { key: 'propietario', label: 'Propietario' },
-        { key: 'doctor', label: 'Doctor', render: (f) => f.doctor ?? '—' },
-        { key: 'especialidad', label: 'Especialidad', render: (f) => f.especialidad ?? '—' },
+        { key: 'fecha', label: 'Fecha', sortKey: 'fecha' },
+        { key: 'paciente', label: 'Paciente', sortKey: 'paciente' },
+        { key: 'propietario', label: 'Propietario', sortKey: 'propietario' },
+        { key: 'doctor', label: 'Doctor', render: (f) => f.doctor ?? '—', sortKey: 'doctor' },
+        { key: 'especialidad', label: 'Especialidad', render: (f) => f.especialidad ?? '—', sortKey: 'especialidad' },
         {
             key: 'acciones',
             label: 'Acciones',
@@ -114,6 +114,8 @@ export default function ConsultasIndex({ consultas, pestana, filtros, contadores
                     columnas={columnas}
                     url="/consultas"
                     busqueda={filtros.buscar}
+                    orden={filtros.orden}
+                    direccion={filtros.direccion}
                     parametros={{ pestana }}
                     placeholderBusqueda="Buscar por paciente, propietario o CI..."
                     mensajeVacio={pestana === 'pendientes' ? 'No hay citas pendientes.' : 'No hay consultas atendidas.'}

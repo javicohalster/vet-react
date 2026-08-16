@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\Ordenable;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Http\RedirectResponse;
@@ -12,17 +13,28 @@ use Inertia\Response;
 
 class RolController extends Controller
 {
+    use Ordenable;
+
+    private const COLUMNAS_ORDENABLES = [
+        'name' => 'name',
+        'display_name' => 'display_name',
+        'usuarios' => 'users_count',
+    ];
+
     public function index(Request $request): Response
     {
         $buscar = trim((string) $request->query('buscar', ''));
 
-        $roles = Role::query()
+        $consulta = Role::query()
             ->when($buscar !== '', fn ($q) => $q->where(fn ($s) => $s
                 ->where('name', 'like', "%{$buscar}%")
                 ->orWhere('display_name', 'like', "%{$buscar}%")))
             ->with('permissions:id,name')
-            ->withCount('users')
-            ->orderBy('name')
+            ->withCount('users');
+
+        $orden = $this->aplicarOrden($consulta, $request, self::COLUMNAS_ORDENABLES, 'name');
+
+        $roles = $consulta
             ->paginate(15)
             ->withQueryString()
             ->through(fn (Role $rol) => [
@@ -37,7 +49,7 @@ class RolController extends Controller
 
         return Inertia::render('roles/index', [
             'roles' => $roles,
-            'filtros' => ['buscar' => $buscar],
+            'filtros' => ['buscar' => $buscar, ...$orden],
             'permisos' => Permission::orderBy('name')->get(['id', 'name']),
         ]);
     }

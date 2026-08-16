@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\Ordenable;
 use App\Models\ConsultaVacuna;
 use App\Models\Query;
 use App\Models\User;
@@ -19,18 +20,37 @@ use Inertia\Response;
  */
 class ConsultaController extends Controller
 {
+    use Ordenable;
+
+    /** Columna visible en la tabla => columna real (con joins, para poder ordenar por paciente/doctor/especialidad). */
+    private const COLUMNAS_ORDENABLES = [
+        'fecha' => 'queries.fecha_inicio',
+        'paciente' => 'paciente.nombres',
+        'propietario' => 'paciente.apellidos',
+        'doctor' => 'doctor.apellidos',
+        'especialidad' => 'specialities.nombre',
+        'estado' => 'queries.estado',
+    ];
+
     public function index(Request $request): Response
     {
         $usuario = $request->user();
         $buscar = trim((string) $request->query('buscar', ''));
         $pestana = $request->query('pestana') === 'atendidas' ? 'atendidas' : 'pendientes';
 
-        $consultas = Query::query()
+        $consulta = Query::query()
+            ->join('users as paciente', 'queries.paciente_id', '=', 'paciente.id')
+            ->leftJoin('users as doctor', 'queries.doctor_id', '=', 'doctor.id')
+            ->leftJoin('specialities', 'queries.speciality_id', '=', 'specialities.id')
+            ->select('queries.*')
             ->visiblesPara($usuario)
-            ->where('estado', $pestana === 'atendidas' ? Query::ESTADO_ATENDIDO : Query::ESTADO_PENDIENTE)
+            ->where('queries.estado', $pestana === 'atendidas' ? Query::ESTADO_ATENDIDO : Query::ESTADO_PENDIENTE)
             ->when($buscar !== '', fn (Builder $q) => $this->filtrarPorTexto($q, $buscar))
-            ->with(['paciente:id,nombres,apellidos', 'doctor:id,nombres,apellidos', 'especialidad:id,nombre'])
-            ->orderByDesc('fecha_inicio')
+            ->with(['paciente:id,nombres,apellidos', 'doctor:id,nombres,apellidos', 'especialidad:id,nombre']);
+
+        $orden = $this->aplicarOrden($consulta, $request, self::COLUMNAS_ORDENABLES, 'fecha', 'desc');
+
+        $consultas = $consulta
             ->paginate(15)
             ->withQueryString()
             ->through(fn (Query $consulta) => [
@@ -47,7 +67,7 @@ class ConsultaController extends Controller
         return Inertia::render('consultas/index', [
             'consultas' => $consultas,
             'pestana' => $pestana,
-            'filtros' => ['buscar' => $buscar],
+            'filtros' => ['buscar' => $buscar, ...$orden],
             'doctores' => User::withRole('doctor')
                 ->orderBy('apellidos')
                 ->get(['id', 'nombres', 'apellidos'])

@@ -27,7 +27,7 @@ export interface RecepcionistaFila {
 
 interface RecepcionistasIndexProps {
     recepcionistas: Paginated<RecepcionistaFila>;
-    filtros: { buscar: string };
+    filtros: { buscar: string; orden: string; direccion: 'asc' | 'desc' };
 }
 
 export default function RecepcionistasIndex({ recepcionistas, filtros }: RecepcionistasIndexProps) {
@@ -38,11 +38,11 @@ export default function RecepcionistasIndex({ recepcionistas, filtros }: Recepci
     const [eliminarId, setEliminarId] = useState<number | null>(null);
 
     const columnas: Column<RecepcionistaFila>[] = [
-        { key: 'rut', label: 'CI' },
-        { key: 'nombres', label: 'Nombres' },
-        { key: 'apellidos', label: 'Apellidos' },
-        { key: 'email', label: 'Email' },
-        { key: 'telefono', label: 'Teléfono' },
+        { key: 'rut', label: 'CI', sortKey: 'rut' },
+        { key: 'nombres', label: 'Nombres', sortKey: 'nombres' },
+        { key: 'apellidos', label: 'Apellidos', sortKey: 'apellidos' },
+        { key: 'email', label: 'Email', sortKey: 'email' },
+        { key: 'telefono', label: 'Teléfono', sortKey: 'telefono' },
         {
             key: 'acciones',
             label: 'Acciones',
@@ -85,6 +85,8 @@ export default function RecepcionistasIndex({ recepcionistas, filtros }: Recepci
                     columnas={columnas}
                     url="/recepcionistas"
                     busqueda={filtros.buscar}
+                    orden={filtros.orden}
+                    direccion={filtros.direccion}
                     placeholderBusqueda="Buscar por nombre, CI o email..."
                     mensajeVacio="No se encontraron recepcionistas."
                 />

@@ -31,7 +31,7 @@ export interface PersonaFila {
 
 interface PersonasIndexProps {
     personas: Paginated<PersonaFila>;
-    filtros: { buscar: string };
+    filtros: { buscar: string; orden: string; direccion: 'asc' | 'desc' };
     roles: Opcion[];
 }
 
@@ -44,10 +44,10 @@ export default function PersonasIndex({ personas, filtros, roles }: PersonasInde
     const [eliminarId, setEliminarId] = useState<number | null>(null);
 
     const columnas: Column<PersonaFila>[] = [
-        { key: 'rut', label: 'CI' },
-        { key: 'nombres', label: 'Nombres' },
-        { key: 'apellidos', label: 'Apellidos' },
-        { key: 'email', label: 'Email' },
+        { key: 'rut', label: 'CI', sortKey: 'rut' },
+        { key: 'nombres', label: 'Nombres', sortKey: 'nombres' },
+        { key: 'apellidos', label: 'Apellidos', sortKey: 'apellidos' },
+        { key: 'email', label: 'Email', sortKey: 'email' },
         {
             key: 'roles',
             label: 'Roles',
@@ -104,6 +104,8 @@ export default function PersonasIndex({ personas, filtros, roles }: PersonasInde
                     columnas={columnas}
                     url="/personas"
                     busqueda={filtros.buscar}
+                    orden={filtros.orden}
+                    direccion={filtros.direccion}
                     placeholderBusqueda="Buscar por nombre, usuario, CI o email..."
                     mensajeVacio="No se encontraron personas."
                 />

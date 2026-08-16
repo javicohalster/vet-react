@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\Ordenable;
 use App\Models\Dia;
 use App\Models\Query;
 use App\Models\Speciality;
@@ -22,20 +23,34 @@ use Inertia\Response;
  */
 class DoctorController extends Controller
 {
+    use Ordenable;
+
     private const ROL_DOCTOR = 2;
+
+    private const COLUMNAS_ORDENABLES = [
+        'rut' => 'rut',
+        'username' => 'username',
+        'nombres' => 'nombres',
+        'apellidos' => 'apellidos',
+        'email' => 'email',
+        'telefono' => 'telefono',
+    ];
 
     public function index(Request $request): Response
     {
         $buscar = trim((string) $request->query('buscar', ''));
 
-        $doctores = User::withRole('doctor')
+        $consulta = User::withRole('doctor')
             ->when($buscar !== '', fn (Builder $q) => $q->where(fn (Builder $s) => $s
                 ->where('nombres', 'like', "%{$buscar}%")
                 ->orWhere('apellidos', 'like', "%{$buscar}%")
                 ->orWhere('rut', 'like', "%{$buscar}%")
                 ->orWhere('email', 'like', "%{$buscar}%")))
-            ->with('specialities:id,nombre')
-            ->orderBy('apellidos')
+            ->with('specialities:id,nombre');
+
+        $orden = $this->aplicarOrden($consulta, $request, self::COLUMNAS_ORDENABLES, 'apellidos');
+
+        $doctores = $consulta
             ->paginate(15)
             ->withQueryString()
             ->through(fn (User $doctor) => [
@@ -56,7 +71,7 @@ class DoctorController extends Controller
 
         return Inertia::render('doctores/index', [
             'doctores' => $doctores,
-            'filtros' => ['buscar' => $buscar],
+            'filtros' => ['buscar' => $buscar, ...$orden],
             'especialidades' => Speciality::orderBy('nombre')->get(['id', 'nombre']),
         ]);
     }

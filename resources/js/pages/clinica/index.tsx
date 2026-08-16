@@ -28,7 +28,7 @@ interface ClinicaFila {
 
 interface ClinicaIndexProps {
     clinicas: Paginated<ClinicaFila>;
-    filtros: { buscar: string };
+    filtros: { buscar: string; orden: string; direccion: 'asc' | 'desc' };
 }
 
 const VACIO = { nombre: '', telefono: '', email: '', direccion: '', region: '', ciudad: '' };
@@ -67,10 +67,10 @@ export default function ClinicaIndex({ clinicas, filtros }: ClinicaIndexProps) {
     };
 
     const columnas: Column<ClinicaFila>[] = [
-        { key: 'nombre', label: 'Nombre' },
-        { key: 'telefono', label: 'Teléfono' },
-        { key: 'email', label: 'Email' },
-        { key: 'ciudad', label: 'Ciudad' },
+        { key: 'nombre', label: 'Nombre', sortKey: 'nombre' },
+        { key: 'telefono', label: 'Teléfono', sortKey: 'telefono' },
+        { key: 'email', label: 'Email', sortKey: 'email' },
+        { key: 'ciudad', label: 'Ciudad', sortKey: 'ciudad' },
         { key: 'consultas', label: 'Consultas', render: (f) => <Badge variant="outline">{f.consultas}</Badge> },
         {
             key: 'acciones',
@@ -113,6 +113,8 @@ export default function ClinicaIndex({ clinicas, filtros }: ClinicaIndexProps) {
                     columnas={columnas}
                     url="/clinica"
                     busqueda={filtros.buscar}
+                    orden={filtros.orden}
+                    direccion={filtros.direccion}
                     placeholderBusqueda="Buscar por nombre, ciudad o email..."
                     mensajeVacio="No se encontraron clínicas."
                 />

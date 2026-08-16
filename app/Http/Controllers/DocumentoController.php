@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\Ordenable;
 use App\Models\Query;
 use App\Models\QueryFile;
 use App\Models\User;
@@ -27,6 +28,8 @@ use ZipArchive;
  */
 class DocumentoController extends Controller
 {
+    use Ordenable;
+
     private const DISCO = 'local';
 
     private const CARPETA = 'documentos';
@@ -36,11 +39,19 @@ class DocumentoController extends Controller
     private const EXTENSIONES = 'pdf,doc,docx,jpg,jpeg,png,gif,webp,bmp,mp4,avi,mov,webm,ogg';
 
     /** Listado de pacientes con el número de documentos cargados. */
+    private const COLUMNAS_ORDENABLES = [
+        'rut' => 'rut',
+        'chip' => 'chip',
+        'nombres' => 'nombres',
+        'apellidos' => 'apellidos',
+        'telefono' => 'telefono',
+    ];
+
     public function index(Request $request): Response
     {
         $buscar = trim((string) $request->query('buscar', ''));
 
-        $pacientes = User::withRole('paciente')
+        $consulta = User::withRole('paciente')
             ->when($buscar !== '', function (Builder $q) use ($buscar) {
                 $q->where(function (Builder $sub) use ($buscar) {
                     $sub->where('nombres', 'like', "%{$buscar}%")
@@ -48,8 +59,11 @@ class DocumentoController extends Controller
                         ->orWhere('rut', 'like', "%{$buscar}%")
                         ->orWhere('chip', 'like', "%{$buscar}%");
                 });
-            })
-            ->orderBy('nombres')
+            });
+
+        $orden = $this->aplicarOrden($consulta, $request, self::COLUMNAS_ORDENABLES, 'nombres');
+
+        $pacientes = $consulta
             ->paginate(15)
             ->withQueryString()
             ->through(fn (User $paciente) => [
@@ -68,7 +82,7 @@ class DocumentoController extends Controller
 
         return Inertia::render('documentos/index', [
             'pacientes' => $pacientes,
-            'filtros' => ['buscar' => $buscar],
+            'filtros' => ['buscar' => $buscar, ...$orden],
         ]);
     }
 

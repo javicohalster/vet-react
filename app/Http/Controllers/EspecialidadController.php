@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\Ordenable;
 use App\Models\Query;
 use App\Models\Speciality;
 use Illuminate\Http\RedirectResponse;
@@ -12,14 +13,24 @@ use Inertia\Response;
 
 class EspecialidadController extends Controller
 {
+    use Ordenable;
+
+    private const COLUMNAS_ORDENABLES = [
+        'nombre' => 'nombre',
+        'doctores' => 'users_count',
+    ];
+
     public function index(Request $request): Response
     {
         $buscar = trim((string) $request->query('buscar', ''));
 
-        $especialidades = Speciality::query()
+        $consulta = Speciality::query()
             ->when($buscar !== '', fn ($q) => $q->where('nombre', 'like', "%{$buscar}%"))
-            ->withCount('users')
-            ->orderBy('nombre')
+            ->withCount('users');
+
+        $orden = $this->aplicarOrden($consulta, $request, self::COLUMNAS_ORDENABLES, 'nombre');
+
+        $especialidades = $consulta
             ->paginate(15)
             ->withQueryString()
             ->through(fn (Speciality $especialidad) => [
@@ -31,7 +42,7 @@ class EspecialidadController extends Controller
 
         return Inertia::render('especialidades/index', [
             'especialidades' => $especialidades,
-            'filtros' => ['buscar' => $buscar],
+            'filtros' => ['buscar' => $buscar, ...$orden],
         ]);
     }
 

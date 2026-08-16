@@ -34,7 +34,7 @@ export interface LaboratorioFila {
 
 interface LaboratorioIndexProps {
     laboratorios: Paginated<LaboratorioFila>;
-    filtros: { buscar: string; estado: string };
+    filtros: { buscar: string; estado: string; orden: string; direccion: 'asc' | 'desc' };
     contadores: { pendiente: number; en_proceso: number; completado: number };
     doctores: Opcion[];
 }
@@ -62,12 +62,17 @@ export default function LaboratorioIndex({ laboratorios, filtros, contadores, do
     };
 
     const columnas: Column<LaboratorioFila>[] = [
-        { key: 'fecha_muestra', label: 'Fecha de muestra' },
-        { key: 'paciente', label: 'Paciente', render: (f) => f.paciente ?? '—' },
-        { key: 'propietario', label: 'Propietario', render: (f) => f.propietario ?? '—' },
-        { key: 'tipo_examen', label: 'Examen' },
-        { key: 'doctor', label: 'Doctor', render: (f) => f.doctor ?? '—' },
-        { key: 'estado', label: 'Estado', render: (f) => <Badge variant={ESTADO_BADGE[f.estado]}>{ESTADO_LABEL[f.estado]}</Badge> },
+        { key: 'fecha_muestra', label: 'Fecha de muestra', sortKey: 'fecha_muestra' },
+        { key: 'paciente', label: 'Paciente', render: (f) => f.paciente ?? '—', sortKey: 'paciente' },
+        { key: 'propietario', label: 'Propietario', render: (f) => f.propietario ?? '—', sortKey: 'propietario' },
+        { key: 'tipo_examen', label: 'Examen', sortKey: 'tipo_examen' },
+        { key: 'doctor', label: 'Doctor', render: (f) => f.doctor ?? '—', sortKey: 'doctor' },
+        {
+            key: 'estado',
+            label: 'Estado',
+            render: (f) => <Badge variant={ESTADO_BADGE[f.estado]}>{ESTADO_LABEL[f.estado]}</Badge>,
+            sortKey: 'estado',
+        },
         {
             key: 'acciones',
             label: 'Acciones',
@@ -132,6 +137,8 @@ export default function LaboratorioIndex({ laboratorios, filtros, contadores, do
                     columnas={columnas}
                     url="/laboratorio"
                     busqueda={filtros.buscar}
+                    orden={filtros.orden}
+                    direccion={filtros.direccion}
                     parametros={{ estado: filtros.estado }}
                     placeholderBusqueda="Buscar por paciente, propietario, CI o tipo de examen..."
                     mensajeVacio="No se encontraron exámenes de laboratorio."

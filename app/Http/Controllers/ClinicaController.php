@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\Ordenable;
 use App\Models\Query;
 use App\Models\Unity;
 use Illuminate\Http\RedirectResponse;
@@ -15,16 +16,29 @@ use Inertia\Response;
  */
 class ClinicaController extends Controller
 {
+    use Ordenable;
+
+    private const COLUMNAS_ORDENABLES = [
+        'nombre' => 'nombre',
+        'telefono' => 'telefono',
+        'email' => 'email',
+        'region' => 'region',
+        'ciudad' => 'ciudad',
+    ];
+
     public function index(Request $request): Response
     {
         $buscar = trim((string) $request->query('buscar', ''));
 
-        $clinicas = Unity::query()
+        $consulta = Unity::query()
             ->when($buscar !== '', fn ($q) => $q->where(fn ($s) => $s
                 ->where('nombre', 'like', "%{$buscar}%")
                 ->orWhere('ciudad', 'like', "%{$buscar}%")
-                ->orWhere('email', 'like', "%{$buscar}%")))
-            ->orderBy('nombre')
+                ->orWhere('email', 'like', "%{$buscar}%")));
+
+        $orden = $this->aplicarOrden($consulta, $request, self::COLUMNAS_ORDENABLES, 'nombre');
+
+        $clinicas = $consulta
             ->paginate(15)
             ->withQueryString()
             ->through(fn (Unity $clinica) => [
@@ -40,7 +54,7 @@ class ClinicaController extends Controller
 
         return Inertia::render('clinica/index', [
             'clinicas' => $clinicas,
-            'filtros' => ['buscar' => $buscar],
+            'filtros' => ['buscar' => $buscar, ...$orden],
         ]);
     }
 

@@ -38,7 +38,7 @@ export interface PacienteFila {
 
 interface PacientesIndexProps {
     pacientes: Paginated<PacienteFila>;
-    filtros: { buscar: string };
+    filtros: { buscar: string; orden: string; direccion: 'asc' | 'desc' };
     razas: Opcion[];
 }
 
@@ -51,14 +51,14 @@ export default function PacientesIndex({ pacientes, filtros, razas }: PacientesI
     const [eliminarId, setEliminarId] = useState<number | null>(null);
 
     const columnas: Column<PacienteFila>[] = [
-        { key: 'id', label: 'N° Historia Clínica' },
-        { key: 'rut', label: 'CI' },
-        { key: 'nombres', label: 'Paciente' },
-        { key: 'apellidos', label: 'Propietario' },
-        { key: 'telefono', label: 'Teléfono' },
+        { key: 'id', label: 'N° Historia Clínica', sortKey: 'id' },
+        { key: 'rut', label: 'CI', sortKey: 'rut' },
+        { key: 'nombres', label: 'Paciente', sortKey: 'nombres' },
+        { key: 'apellidos', label: 'Propietario', sortKey: 'apellidos' },
+        { key: 'telefono', label: 'Teléfono', sortKey: 'telefono' },
         { key: 'raza', label: 'Raza', render: (f) => f.raza ?? '—' },
-        { key: 'edad', label: 'Edad' },
-        { key: 'ultima_atencion', label: 'Última atención', render: (f) => f.ultima_atencion ?? '—' },
+        { key: 'edad', label: 'Edad', sortKey: 'edad' },
+        { key: 'ultima_atencion', label: 'Última atención', render: (f) => f.ultima_atencion ?? '—', sortKey: 'ultima_atencion' },
         {
             key: 'acciones',
             label: 'Acciones',
@@ -106,6 +106,8 @@ export default function PacientesIndex({ pacientes, filtros, razas }: PacientesI
                     columnas={columnas}
                     url="/pacientes"
                     busqueda={filtros.buscar}
+                    orden={filtros.orden}
+                    direccion={filtros.direccion}
                     placeholderBusqueda="Buscar por N° historia clínica, nombre, propietario, CI o chip..."
                     mensajeVacio="No se encontraron pacientes."
                 />

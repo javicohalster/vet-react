@@ -26,7 +26,7 @@ interface PermisoFila {
 
 interface PermisosIndexProps {
     permisos: Paginated<PermisoFila>;
-    filtros: { buscar: string };
+    filtros: { buscar: string; orden: string; direccion: 'asc' | 'desc' };
 }
 
 const VACIO = { name: '', display_name: '', description: '' };
@@ -65,7 +65,7 @@ export default function PermisosIndex({ permisos, filtros }: PermisosIndexProps)
     };
 
     const columnas: Column<PermisoFila>[] = [
-        { key: 'name', label: 'Nombre' },
+        { key: 'name', label: 'Nombre', sortKey: 'name' },
         {
             key: 'roles',
             label: 'Roles asignados',
@@ -116,6 +116,8 @@ export default function PermisosIndex({ permisos, filtros }: PermisosIndexProps)
                     columnas={columnas}
                     url="/permisos"
                     busqueda={filtros.buscar}
+                    orden={filtros.orden}
+                    direccion={filtros.direccion}
                     placeholderBusqueda="Buscar permiso..."
                     mensajeVacio="No se encontraron permisos."
                 />
