@@ -17,6 +17,7 @@ use App\Http\Controllers\RecepcionistaController;
 use App\Http\Controllers\RecetaController;
 use App\Http\Controllers\RevisarController;
 use App\Http\Controllers\RolController;
+use App\Http\Controllers\TipoVacunaController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -127,6 +128,13 @@ Route::middleware(['auth', 'role:administrador|doctor|recepcionista'])->group(fu
         Route::post('especialidades', [EspecialidadController::class, 'store'])->name('especialidades.store')->middleware('permission:crear-especialidades');
         Route::put('especialidades/{especialidad}', [EspecialidadController::class, 'update'])->name('especialidades.update')->middleware('permission:editar-especialidades');
         Route::delete('especialidades/{especialidad}', [EspecialidadController::class, 'destroy'])->name('especialidades.destroy')->middleware('permission:eliminar-especialidades');
+    });
+
+    Route::middleware('permission:leer-vacunas')->group(function () {
+        Route::get('vacunas', [TipoVacunaController::class, 'index'])->name('vacunas.index');
+        Route::post('vacunas', [TipoVacunaController::class, 'store'])->name('vacunas.store')->middleware('permission:crear-vacunas');
+        Route::put('vacunas/{vacuna}', [TipoVacunaController::class, 'update'])->name('vacunas.update')->middleware('permission:editar-vacunas');
+        Route::delete('vacunas/{vacuna}', [TipoVacunaController::class, 'destroy'])->name('vacunas.destroy')->middleware('permission:eliminar-vacunas');
     });
 
     // --- Configuración ----------------------------------------------------

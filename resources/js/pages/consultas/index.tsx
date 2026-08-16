@@ -38,9 +38,10 @@ interface ConsultasIndexProps {
     pestana: 'pendientes' | 'atendidas';
     filtros: { buscar: string; orden: string; direccion: 'asc' | 'desc' };
     contadores: { pendientes: number; atendidas: number };
+    tiposVacuna: string[];
 }
 
-export default function ConsultasIndex({ consultas, pestana, filtros, contadores }: ConsultasIndexProps) {
+export default function ConsultasIndex({ consultas, pestana, filtros, contadores, tiposVacuna }: ConsultasIndexProps) {
     const { can } = usePermissions();
     const [consultaId, setConsultaId] = useState<number | null>(null);
     const [eliminarId, setEliminarId] = useState<number | null>(null);
@@ -122,7 +123,7 @@ export default function ConsultasIndex({ consultas, pestana, filtros, contadores
                 />
             </div>
 
-            <AtenderDialog consultaId={consultaId} onClose={() => setConsultaId(null)} />
+            <AtenderDialog consultaId={consultaId} onClose={() => setConsultaId(null)} tiposVacuna={tiposVacuna} />
 
             <AlertDialog open={eliminarId !== null} onOpenChange={(abierto) => !abierto && setEliminarId(null)}>
                 <AlertDialogContent>
