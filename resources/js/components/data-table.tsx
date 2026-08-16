@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { type Paginated } from '@/types';
 import { router } from '@inertiajs/react';
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export interface Column<T> {
     /** Clave única de la columna. */
@@ -40,8 +40,10 @@ interface DataTableProps<T> {
 
 /**
  * Tabla con búsqueda y paginación en servidor. Sustituye a DataTables.js del
- * sistema anterior: la búsqueda se envía al backend (debounce de 350 ms) para
- * no traer miles de registros al navegador.
+ * sistema anterior. La búsqueda NO se dispara mientras se escribe (con
+ * muchos registros, una consulta por letra es lento e innecesario): se
+ * manda al backend solo cuando el usuario termina, con Enter o al salir
+ * del campo (blur).
  */
 export function DataTable<T extends { id: number }>({
     paginacion,
@@ -56,7 +58,6 @@ export function DataTable<T extends { id: number }>({
     direccion,
 }: DataTableProps<T>) {
     const [termino, setTermino] = useState(busqueda);
-    const primeraCarga = useRef(true);
 
     // Mantiene el input sincronizado si el servidor devuelve otra búsqueda.
     useEffect(() => {
@@ -64,6 +65,7 @@ export function DataTable<T extends { id: number }>({
     }, [busqueda]);
 
     const buscar = (valor: string) => {
+        if (valor === busqueda) return;
         router.get(url, { ...limpiar(parametros), buscar: valor || undefined, orden, direccion }, { preserveState: true, replace: true });
     };
 
@@ -79,24 +81,6 @@ export function DataTable<T extends { id: number }>({
             { preserveState: true, replace: true },
         );
     };
-
-    useEffect(() => {
-        if (primeraCarga.current) {
-            primeraCarga.current = false;
-            return;
-        }
-
-        if (termino === busqueda) {
-            return;
-        }
-
-        // Espera a que el usuario haga una pausa real al escribir antes de
-        // buscar, para no lanzar una consulta por cada letra.
-        const temporizador = setTimeout(() => buscar(termino), 600);
-
-        return () => clearTimeout(temporizador);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [termino]);
 
     const irA = (destino: string | null) => {
         if (destino) {
@@ -119,6 +103,7 @@ export function DataTable<T extends { id: number }>({
                             buscar(termino);
                         }
                     }}
+                    onBlur={() => buscar(termino)}
                     placeholder={placeholderBusqueda}
                     className="pl-8"
                     aria-label="Buscar"
