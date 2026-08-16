@@ -57,7 +57,8 @@ class DocumentoController extends Controller
                     $sub->where('nombres', 'like', "%{$buscar}%")
                         ->orWhere('apellidos', 'like', "%{$buscar}%")
                         ->orWhere('rut', 'like', "%{$buscar}%")
-                        ->orWhere('chip', 'like', "%{$buscar}%");
+                        ->orWhere('chip', 'like', "%{$buscar}%")
+                        ->orWhere('id', 'like', "%{$buscar}%");
                 });
             });
 

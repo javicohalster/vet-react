@@ -32,6 +32,7 @@ export default function DocumentosIndex({ pacientes, filtros }: DocumentosIndexP
     const [consultaId, setConsultaId] = useState<number | null>(null);
 
     const columnas: Column<PacienteDocumentos>[] = [
+        { key: 'id', label: 'N° H. Clínica', sortKey: 'id' },
         { key: 'rut', label: 'CI', sortKey: 'rut' },
         { key: 'chip', label: 'Chip', render: (f) => f.chip ?? '—', sortKey: 'chip' },
         { key: 'nombres', label: 'Paciente', sortKey: 'nombres' },
@@ -66,7 +67,7 @@ export default function DocumentosIndex({ pacientes, filtros }: DocumentosIndexP
                     busqueda={filtros.buscar}
                     orden={filtros.orden}
                     direccion={filtros.direccion}
-                    placeholderBusqueda="Buscar por nombre, propietario, CI o chip..."
+                    placeholderBusqueda="Buscar por N° H. Clínica, nombre, propietario, CI o chip..."
                     mensajeVacio="No se encontraron pacientes."
                 />
             </div>
