@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/searchable-select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import axios from '@/lib/http';
@@ -200,8 +201,12 @@ export function AtenderDialog({
     };
 
     return (
-        <Dialog open={consultaId !== null} onOpenChange={(abierto) => !abierto && onClose()}>
-            <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] min-w-0 overflow-y-auto sm:max-w-3xl">
+        <Dialog modal={false} open={consultaId !== null} onOpenChange={(abierto) => !abierto && onClose()}>
+            <DialogContent
+                className="max-h-[90vh] w-[calc(100vw-2rem)] min-w-0 overflow-y-auto sm:max-w-3xl"
+                onInteractOutside={(e) => e.preventDefault()}
+                onPointerDownOutside={(e) => e.preventDefault()}
+            >
                 <DialogHeader>
                     <DialogTitle>Atención médica</DialogTitle>
                 </DialogHeader>
@@ -402,18 +407,7 @@ function CampoSelect({
     return (
         <div className={`grid gap-1.5 ${className ?? ''}`}>
             <Label>{label}</Label>
-            <Select value={value} onValueChange={onChange} disabled={disabled}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Selecciona" />
-                </SelectTrigger>
-                <SelectContent>
-                    {opciones.map((opcion) => (
-                        <SelectItem key={opcion} value={opcion}>
-                            {opcion}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <SearchableSelect value={value} onChange={onChange} opciones={opciones} disabled={disabled} />
             <InputError message={error} />
         </div>
     );
