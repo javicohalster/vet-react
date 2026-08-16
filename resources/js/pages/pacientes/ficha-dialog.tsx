@@ -74,7 +74,7 @@ export function FichaDialog({ pacienteId, onClose }: { pacienteId: number | null
                         </div>
 
                         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:col-span-2">
-                            <Dato etiqueta="N° Historia Clínica" valor={String(paciente.id)} />
+                            <Dato etiqueta="N° H. Clínica" valor={String(paciente.id)} />
                             <Dato etiqueta="CI propietario" valor={paciente.rut} />
                             <Dato etiqueta="Chip" valor={paciente.chip} />
                             <Dato etiqueta="Paciente" valor={paciente.nombres} />

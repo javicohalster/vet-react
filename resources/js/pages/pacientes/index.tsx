@@ -108,7 +108,7 @@ export default function PacientesIndex({ pacientes, filtros, razas }: PacientesI
                     busqueda={filtros.buscar}
                     orden={filtros.orden}
                     direccion={filtros.direccion}
-                    placeholderBusqueda="Buscar por N° historia clínica, nombre, propietario, CI o chip..."
+                    placeholderBusqueda="Buscar por N° H. Clínica, nombre, propietario, CI o chip..."
                     mensajeVacio="No se encontraron pacientes."
                 />
             </div>
