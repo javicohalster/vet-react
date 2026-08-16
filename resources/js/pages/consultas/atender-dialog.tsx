@@ -68,14 +68,8 @@ function calcularFechaSiguiente(fecha: string, dias: string): string {
 }
 
 /** Listas fijas heredadas del formulario original (nunca vinieron de una tabla). */
-const TIPOS_VACUNA = [
-    'BIOZOO PUPPY FENCE L5', 'HIPRADOG PV', 'HIPRADOG 7', 'PFIZER 5L', 'PFIZER 5L + RABIGEN MONO',
-    'PFIZER 5L4', 'PFIZER 5L4 CV', 'PFIZER BRONCHICINE', 'BAGOVAC RABIA', 'VIRBAC CANIGEN MHA2PPi / LR',
-    'HIPRADOG 7 - BAGOVAC RABIA', 'PFIZER 5L - BAGOVAC RABIA', 'PFIZER 5L4 - BAGOVAC RABIA',
-    'VIRBAC FELIGEN CPR', 'VIRBAC FELIGEN CPR - BAGOVAC RABIA', 'PFIZER FELOCELL 3',
-    'PFIZER FELOCELL 3 - BAGOVAC RABIA', 'VIRBAC RABIGEN MONO', 'VIRBAC CANIGEN MHA2PPi / L',
-    'VIRBAC FELIGEN CPR - RABIGEN MONO', 'DEFENSOR',
-];
+// Los tipos de vacuna ya no son una lista fija: se administran en
+// Mantenimiento > Vacunas y llegan como prop (tiposVacuna).
 
 const DIAS_REVACUNAR = ['15', '18', '21', '30', '120', '365'];
 
@@ -106,7 +100,15 @@ const CAMPOS_INICIALES: Record<string, string> = {
     estadoaltahospitalizacion: '', fechaaltahospitalizacion: '', recetahospitalizar: '',
 };
 
-export function AtenderDialog({ consultaId, onClose }: { consultaId: number | null; onClose: () => void }) {
+export function AtenderDialog({
+    consultaId,
+    onClose,
+    tiposVacuna,
+}: {
+    consultaId: number | null;
+    onClose: () => void;
+    tiposVacuna: string[];
+}) {
     const { can } = usePermissions();
     const [detalle, setDetalle] = useState<DetalleConsulta | null>(null);
     const [cargando, setCargando] = useState(false);
@@ -288,7 +290,7 @@ export function AtenderDialog({ consultaId, onClose }: { consultaId: number | nu
                                             onChange={(v) => actualizarVacuna(indice, 'tipo_vacuna', v)}
                                             error={errores[`vacunas.${indice}.tipo_vacuna`]}
                                             disabled={soloLectura}
-                                            opciones={TIPOS_VACUNA}
+                                            opciones={tiposVacuna}
                                         />
                                         <CampoSelect
                                             label="Días para revacunar"

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\Ordenable;
 use App\Models\ConsultaVacuna;
 use App\Models\Query;
+use App\Models\TipoVacuna;
 use App\Models\User;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -76,6 +77,7 @@ class ConsultaController extends Controller
                 'pendientes' => Query::query()->visiblesPara($usuario)->pendientes()->count(),
                 'atendidas' => Query::query()->visiblesPara($usuario)->atendidas()->count(),
             ],
+            'tiposVacuna' => TipoVacuna::orderBy('nombre')->pluck('nombre'),
         ]);
     }
 

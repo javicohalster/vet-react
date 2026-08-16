@@ -51,6 +51,7 @@ const mainNavItems: NavItem[] = [
             { title: 'Doctores', url: '/doctores', permission: 'leer-doctores' },
             { title: 'Recepcionistas', url: '/recepcionistas', permission: 'leer-recepcionistas' },
             { title: 'Especialidades', url: '/especialidades', permission: 'leer-especialidades' },
+            { title: 'Vacunas', url: '/vacunas', permission: 'leer-vacunas' },
         ],
     },
     {
