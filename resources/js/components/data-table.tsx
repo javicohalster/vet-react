@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { cn } from '@/lib/utils';
 import { type Paginated } from '@/types';
 import { router } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 export interface Column<T> {
@@ -15,22 +15,27 @@ export interface Column<T> {
     render?: (fila: T) => React.ReactNode;
     className?: string;
     headerClassName?: string;
+    /** Columna (del backend) por la que ordenar al hacer clic en el encabezado. Si se omite, no es ordenable. */
+    sortKey?: string;
 }
 
 interface DataTableProps<T> {
     /** Página de resultados devuelta por el paginador de Laravel. */
     paginacion: Paginated<T>;
     columnas: Column<T>[];
-    /** URL a la que se envían la búsqueda y el cambio de página. */
+    /** URL a la que se envían la búsqueda, el orden y el cambio de página. */
     url: string;
     /** Término de búsqueda actual (viene del servidor). */
     busqueda?: string;
     placeholderBusqueda?: string;
-    /** Parámetros adicionales que deben conservarse al buscar o paginar. */
+    /** Parámetros adicionales que deben conservarse al buscar, ordenar o paginar. */
     parametros?: Record<string, string | number | undefined>;
     mensajeVacio?: string;
     /** Clave de React para cada fila; por defecto `id`. */
     claveFila?: (fila: T) => React.Key;
+    /** Columna y dirección de orden actuales (vienen del servidor). */
+    orden?: string;
+    direccion?: 'asc' | 'desc';
 }
 
 /**
@@ -47,6 +52,8 @@ export function DataTable<T extends { id: number }>({
     parametros = {},
     mensajeVacio = 'No se encontraron registros.',
     claveFila,
+    orden,
+    direccion,
 }: DataTableProps<T>) {
     const [termino, setTermino] = useState(busqueda);
     const primeraCarga = useRef(true);
@@ -57,7 +64,20 @@ export function DataTable<T extends { id: number }>({
     }, [busqueda]);
 
     const buscar = (valor: string) => {
-        router.get(url, { ...limpiar(parametros), buscar: valor || undefined }, { preserveState: true, replace: true });
+        router.get(url, { ...limpiar(parametros), buscar: valor || undefined, orden, direccion }, { preserveState: true, replace: true });
+    };
+
+    const ordenarPor = (columna: Column<T>) => {
+        if (!columna.sortKey) return;
+
+        const mismaColumna = orden === columna.sortKey;
+        const siguienteDireccion = mismaColumna && direccion === 'asc' ? 'desc' : 'asc';
+
+        router.get(
+            url,
+            { ...limpiar(parametros), buscar: termino || undefined, orden: columna.sortKey, direccion: siguienteDireccion },
+            { preserveState: true, replace: true },
+        );
     };
 
     useEffect(() => {
@@ -109,11 +129,32 @@ export function DataTable<T extends { id: number }>({
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-muted/40">
-                            {columnas.map((columna) => (
-                                <TableHead key={columna.key} className={columna.headerClassName}>
-                                    {columna.label}
-                                </TableHead>
-                            ))}
+                            {columnas.map((columna) =>
+                                columna.sortKey ? (
+                                    <TableHead key={columna.key} className={columna.headerClassName}>
+                                        <button
+                                            type="button"
+                                            onClick={() => ordenarPor(columna)}
+                                            className="inline-flex items-center gap-1 font-medium hover:text-foreground"
+                                        >
+                                            {columna.label}
+                                            {orden === columna.sortKey ? (
+                                                direccion === 'asc' ? (
+                                                    <ArrowUp className="h-3.5 w-3.5" />
+                                                ) : (
+                                                    <ArrowDown className="h-3.5 w-3.5" />
+                                                )
+                                            ) : (
+                                                <ArrowUpDown className="h-3.5 w-3.5 opacity-40" />
+                                            )}
+                                        </button>
+                                    </TableHead>
+                                ) : (
+                                    <TableHead key={columna.key} className={columna.headerClassName}>
+                                        {columna.label}
+                                    </TableHead>
+                                ),
+                            )}
                         </TableRow>
                     </TableHeader>
                     <TableBody>

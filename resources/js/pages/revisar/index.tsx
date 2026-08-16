@@ -34,7 +34,7 @@ interface FilaProxima {
 interface RevisarIndexProps {
     citas: Paginated<FilaProxima>;
     tipo: TipoSeguimiento;
-    filtros: { buscar: string; desde: string; hasta: string };
+    filtros: { buscar: string; desde: string; hasta: string; orden: string; direccion: 'asc' | 'desc' };
 }
 
 const ETIQUETAS: Record<TipoSeguimiento, { titulo: string; columna: string; fecha: string; vacio: string }> = {
@@ -62,17 +62,20 @@ export default function RevisarIndex({ citas, tipo, filtros }: RevisarIndexProps
     };
 
     const columnas: Column<FilaProxima>[] = [
-        { key: 'rut', label: 'CI' },
+        { key: 'rut', label: 'CI', sortKey: 'rut' },
         { key: 'chip', label: 'Chip', render: (f) => f.chip ?? '—' },
-        { key: 'nombres', label: 'Paciente' },
-        { key: 'apellidos', label: 'Propietario' },
-        { key: 'telefono', label: 'Teléfono' },
+        { key: 'nombres', label: 'Paciente', sortKey: 'nombres' },
+        { key: 'apellidos', label: 'Propietario', sortKey: 'apellidos' },
+        { key: 'telefono', label: 'Teléfono', sortKey: 'telefono' },
         { key: 'raza', label: 'Raza', render: (f) => f.raza ?? '—' },
-        { key: 'ultima_atencion', label: 'Última atención', render: (f) => f.ultima_atencion ?? '—' },
-        ...(tipo !== 'citas' ? [{ key: 'detalle', label: etiquetas.columna, render: (f: FilaProxima) => f.detalle ?? '—' }] : []),
+        { key: 'ultima_atencion', label: 'Última atención', render: (f) => f.ultima_atencion ?? '—', sortKey: 'ultima_atencion' },
+        ...(tipo !== 'citas'
+            ? [{ key: 'detalle', label: etiquetas.columna, render: (f: FilaProxima) => f.detalle ?? '—', sortKey: 'detalle' }]
+            : []),
         {
             key: 'fecha_proxima',
             label: etiquetas.fecha,
+            sortKey: 'fecha_proxima',
             render: (f) => (
                 <div className="flex items-center gap-2">
                     <span>{f.fecha_proxima ?? '—'}</span>
@@ -115,6 +118,8 @@ export default function RevisarIndex({ citas, tipo, filtros }: RevisarIndexProps
                     columnas={columnas}
                     url="/revisar"
                     busqueda={filtros.buscar}
+                    orden={filtros.orden}
+                    direccion={filtros.direccion}
                     parametros={{ tipo, desde, hasta }}
                     placeholderBusqueda="Buscar por nombre, propietario, CI o teléfono..."
                     mensajeVacio={etiquetas.vacio}

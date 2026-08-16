@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\Ordenable;
 use App\Models\Laboratorio;
 use App\Models\Query;
 use App\Models\QueryFile;
@@ -29,26 +30,43 @@ use Inertia\Response;
  */
 class LaboratorioController extends Controller
 {
+    use Ordenable;
+
+    /** Columna visible => columna real. paciente/propietario/doctor requieren joins. */
+    private const COLUMNAS_ORDENABLES = [
+        'tipo_examen' => 'laboratorios.tipo_examen',
+        'fecha_muestra' => 'laboratorios.fecha_muestra',
+        'estado' => 'laboratorios.estado',
+        'paciente' => 'paciente.nombres',
+        'propietario' => 'paciente.apellidos',
+        'doctor' => 'doctor.apellidos',
+    ];
+
     public function index(Request $request): Response
     {
         $buscar = trim((string) $request->query('buscar', ''));
         $estado = $request->query('estado', Laboratorio::ESTADO_PENDIENTE);
 
-        $laboratorios = Laboratorio::query()
+        $consulta = Laboratorio::query()
+            ->join('queries', 'laboratorios.query_id', '=', 'queries.id')
+            ->join('users as paciente', 'queries.paciente_id', '=', 'paciente.id')
+            ->leftJoin('users as doctor', 'laboratorios.doctor_id', '=', 'doctor.id')
+            ->select('laboratorios.*')
             ->with(['consulta.paciente:id,nombres,apellidos', 'doctor:id,nombres,apellidos'])
-            ->when($estado !== 'todos', fn (Builder $q) => $q->where('estado', $estado))
+            ->when($estado !== 'todos', fn (Builder $q) => $q->where('laboratorios.estado', $estado))
             ->when($buscar !== '', function (Builder $q) use ($buscar) {
                 $q->where(function (Builder $sub) use ($buscar) {
-                    $sub->where('tipo_examen', 'like', "%{$buscar}%")
-                        ->orWhereHas('consulta.paciente', function (Builder $p) use ($buscar) {
-                            $p->where('nombres', 'like', "%{$buscar}%")
-                                ->orWhere('apellidos', 'like', "%{$buscar}%")
-                                ->orWhere('rut', 'like', "%{$buscar}%");
-                        });
+                    $sub->where('laboratorios.tipo_examen', 'like', "%{$buscar}%")
+                        ->orWhere('paciente.nombres', 'like', "%{$buscar}%")
+                        ->orWhere('paciente.apellidos', 'like', "%{$buscar}%")
+                        ->orWhere('paciente.rut', 'like', "%{$buscar}%");
                 });
-            })
-            ->orderByDesc('fecha_muestra')
-            ->orderByDesc('id')
+            });
+
+        $orden = $this->aplicarOrden($consulta, $request, self::COLUMNAS_ORDENABLES, 'fecha_muestra', 'desc');
+        $consulta->orderByDesc('laboratorios.id'); // desempate estable
+
+        $laboratorios = $consulta
             ->paginate(15)
             ->withQueryString()
             ->through(fn (Laboratorio $laboratorio) => [
@@ -63,7 +81,7 @@ class LaboratorioController extends Controller
 
         return Inertia::render('laboratorio/index', [
             'laboratorios' => $laboratorios,
-            'filtros' => ['buscar' => $buscar, 'estado' => $estado],
+            'filtros' => ['buscar' => $buscar, 'estado' => $estado, ...$orden],
             'contadores' => [
                 'pendiente' => Laboratorio::where('estado', Laboratorio::ESTADO_PENDIENTE)->count(),
                 'en_proceso' => Laboratorio::where('estado', Laboratorio::ESTADO_EN_PROCESO)->count(),

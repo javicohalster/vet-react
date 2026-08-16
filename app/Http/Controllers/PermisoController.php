@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\Ordenable;
 use App\Models\Permission;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,14 +12,24 @@ use Inertia\Response;
 
 class PermisoController extends Controller
 {
+    use Ordenable;
+
+    private const COLUMNAS_ORDENABLES = [
+        'name' => 'name',
+        'display_name' => 'display_name',
+    ];
+
     public function index(Request $request): Response
     {
         $buscar = trim((string) $request->query('buscar', ''));
 
-        $permisos = Permission::query()
+        $consulta = Permission::query()
             ->when($buscar !== '', fn ($q) => $q->where('name', 'like', "%{$buscar}%"))
-            ->with('roles:id,name')
-            ->orderBy('name')
+            ->with('roles:id,name');
+
+        $orden = $this->aplicarOrden($consulta, $request, self::COLUMNAS_ORDENABLES, 'name');
+
+        $permisos = $consulta
             ->paginate(20)
             ->withQueryString()
             ->through(fn (Permission $permiso) => [
@@ -31,7 +42,7 @@ class PermisoController extends Controller
 
         return Inertia::render('permisos/index', [
             'permisos' => $permisos,
-            'filtros' => ['buscar' => $buscar],
+            'filtros' => ['buscar' => $buscar, ...$orden],
         ]);
     }
 

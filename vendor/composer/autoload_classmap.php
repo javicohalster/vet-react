@@ -15,6 +15,7 @@ return array(
     'App\\Http\\Controllers\\BuscadorController' => $baseDir . '/app/Http/Controllers/BuscadorController.php',
     'App\\Http\\Controllers\\CitaController' => $baseDir . '/app/Http/Controllers/CitaController.php',
     'App\\Http\\Controllers\\ClinicaController' => $baseDir . '/app/Http/Controllers/ClinicaController.php',
+    'App\\Http\\Controllers\\Concerns\\Ordenable' => $baseDir . '/app/Http/Controllers/Concerns/Ordenable.php',
     'App\\Http\\Controllers\\ConsultaController' => $baseDir . '/app/Http/Controllers/ConsultaController.php',
     'App\\Http\\Controllers\\Controller' => $baseDir . '/app/Http/Controllers/Controller.php',
     'App\\Http\\Controllers\\DoctorController' => $baseDir . '/app/Http/Controllers/DoctorController.php',

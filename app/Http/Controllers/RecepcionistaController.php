@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\Ordenable;
 use App\Models\User;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -13,19 +14,33 @@ use Inertia\Response;
 
 class RecepcionistaController extends Controller
 {
+    use Ordenable;
+
     private const ROL_RECEPCIONISTA = 3;
+
+    private const COLUMNAS_ORDENABLES = [
+        'rut' => 'rut',
+        'username' => 'username',
+        'nombres' => 'nombres',
+        'apellidos' => 'apellidos',
+        'email' => 'email',
+        'telefono' => 'telefono',
+    ];
 
     public function index(Request $request): Response
     {
         $buscar = trim((string) $request->query('buscar', ''));
 
-        $recepcionistas = User::withRole('recepcionista')
+        $consulta = User::withRole('recepcionista')
             ->when($buscar !== '', fn (Builder $q) => $q->where(fn (Builder $s) => $s
                 ->where('nombres', 'like', "%{$buscar}%")
                 ->orWhere('apellidos', 'like', "%{$buscar}%")
                 ->orWhere('rut', 'like', "%{$buscar}%")
-                ->orWhere('email', 'like', "%{$buscar}%")))
-            ->orderBy('apellidos')
+                ->orWhere('email', 'like', "%{$buscar}%")));
+
+        $orden = $this->aplicarOrden($consulta, $request, self::COLUMNAS_ORDENABLES, 'apellidos');
+
+        $recepcionistas = $consulta
             ->paginate(15)
             ->withQueryString()
             ->through(fn (User $persona) => [
@@ -43,7 +58,7 @@ class RecepcionistaController extends Controller
 
         return Inertia::render('recepcionistas/index', [
             'recepcionistas' => $recepcionistas,
-            'filtros' => ['buscar' => $buscar],
+            'filtros' => ['buscar' => $buscar, ...$orden],
         ]);
     }
 

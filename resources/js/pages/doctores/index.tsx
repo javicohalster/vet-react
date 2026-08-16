@@ -33,7 +33,7 @@ export interface DoctorFila {
 
 interface DoctoresIndexProps {
     doctores: Paginated<DoctorFila>;
-    filtros: { buscar: string };
+    filtros: { buscar: string; orden: string; direccion: 'asc' | 'desc' };
     especialidades: Opcion[];
 }
 
@@ -47,10 +47,10 @@ export default function DoctoresIndex({ doctores, filtros, especialidades }: Doc
     const [eliminarId, setEliminarId] = useState<number | null>(null);
 
     const columnas: Column<DoctorFila>[] = [
-        { key: 'rut', label: 'CI' },
-        { key: 'nombres', label: 'Nombres' },
-        { key: 'apellidos', label: 'Apellidos' },
-        { key: 'email', label: 'Email' },
+        { key: 'rut', label: 'CI', sortKey: 'rut' },
+        { key: 'nombres', label: 'Nombres', sortKey: 'nombres' },
+        { key: 'apellidos', label: 'Apellidos', sortKey: 'apellidos' },
+        { key: 'email', label: 'Email', sortKey: 'email' },
         {
             key: 'especialidades',
             label: 'Especialidades',
@@ -110,6 +110,8 @@ export default function DoctoresIndex({ doctores, filtros, especialidades }: Doc
                     columnas={columnas}
                     url="/doctores"
                     busqueda={filtros.buscar}
+                    orden={filtros.orden}
+                    direccion={filtros.direccion}
                     placeholderBusqueda="Buscar por nombre, CI o email..."
                     mensajeVacio="No se encontraron doctores."
                 />

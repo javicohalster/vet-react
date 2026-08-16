@@ -34,7 +34,7 @@ interface PermisoOpcion {
 
 interface RolesIndexProps {
     roles: Paginated<RolFila>;
-    filtros: { buscar: string };
+    filtros: { buscar: string; orden: string; direccion: 'asc' | 'desc' };
     permisos: PermisoOpcion[];
 }
 
@@ -75,8 +75,8 @@ export default function RolesIndex({ roles, filtros, permisos }: RolesIndexProps
     };
 
     const columnas: Column<RolFila>[] = [
-        { key: 'name', label: 'Nombre', render: (f) => f.display_name || f.name },
-        { key: 'usuarios', label: 'Personas', render: (f) => <Badge variant="secondary">{f.usuarios}</Badge> },
+        { key: 'name', label: 'Nombre', render: (f) => f.display_name || f.name, sortKey: 'name' },
+        { key: 'usuarios', label: 'Personas', render: (f) => <Badge variant="secondary">{f.usuarios}</Badge>, sortKey: 'usuarios' },
         {
             key: 'permisos',
             label: 'Permisos',
@@ -131,6 +131,8 @@ export default function RolesIndex({ roles, filtros, permisos }: RolesIndexProps
                     columnas={columnas}
                     url="/roles"
                     busqueda={filtros.buscar}
+                    orden={filtros.orden}
+                    direccion={filtros.direccion}
                     placeholderBusqueda="Buscar rol..."
                     mensajeVacio="No se encontraron roles."
                 />

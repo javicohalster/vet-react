@@ -34,11 +34,12 @@ class RevisarController extends Controller
         $desde = $request->date('desde') ?? Carbon::today();
         $hasta = $request->date('hasta') ?? Carbon::today()->addWeek();
         $buscar = trim((string) $request->query('buscar', ''));
+        [$orden, $direccion] = $this->resolverOrden($request, $tipo);
 
         $filas = match ($tipo) {
-            'vacunas' => $this->proximasVacunas($desde, $hasta, $buscar),
-            'desparasitaciones' => $this->proximasDesparasitaciones($desde, $hasta, $buscar),
-            default => $this->proximasCitas($desde, $hasta, $buscar),
+            'vacunas' => $this->proximasVacunas($desde, $hasta, $buscar, $orden, $direccion),
+            'desparasitaciones' => $this->proximasDesparasitaciones($desde, $hasta, $buscar, $orden, $direccion),
+            default => $this->proximasCitas($desde, $hasta, $buscar, $orden, $direccion),
         };
 
         return Inertia::render('revisar/index', [
@@ -48,11 +49,13 @@ class RevisarController extends Controller
                 'buscar' => $buscar,
                 'desde' => $desde->toDateString(),
                 'hasta' => $hasta->toDateString(),
+                'orden' => $orden,
+                'direccion' => $direccion,
             ],
         ]);
     }
 
-    private function proximasCitas(Carbon $desde, Carbon $hasta, string $buscar): LengthAwarePaginator
+    private function proximasCitas(Carbon $desde, Carbon $hasta, string $buscar, string $orden, string $direccion): LengthAwarePaginator
     {
         return Query::query()
             ->join('users as paciente', 'queries.paciente_id', '=', 'paciente.id')
@@ -60,7 +63,11 @@ class RevisarController extends Controller
             ->where('queries.fechasiguientecita', '<>', '')
             ->whereRaw(self::FORMATO_SQL_CITAS.' BETWEEN ? AND ?', [$desde->toDateString(), $hasta->toDateString()])
             ->when($buscar !== '', fn ($q) => $this->filtrarPaciente($q, $buscar))
-            ->orderByRaw(self::FORMATO_SQL_CITAS.' asc')
+            ->when(
+                $orden === 'fecha_proxima',
+                fn ($q) => $q->orderByRaw(self::FORMATO_SQL_CITAS.' '.$direccion),
+                fn ($q) => $q->orderBy($this->columnasOrdenables()[$orden], $direccion),
+            )
             ->select([
                 'queries.id',
                 ...$this->columnasPaciente(),
@@ -72,15 +79,17 @@ class RevisarController extends Controller
             ->through(fn ($fila) => $this->fila($fila));
     }
 
-    private function proximasVacunas(Carbon $desde, Carbon $hasta, string $buscar): LengthAwarePaginator
+    private function proximasVacunas(Carbon $desde, Carbon $hasta, string $buscar, string $orden, string $direccion): LengthAwarePaginator
     {
+        $columnas = [...$this->columnasOrdenables(), 'fecha_proxima' => 'v.fecha_siguiente_vacuna', 'detalle' => 'v.tipo_vacuna'];
+
         return DB::table('consulta_vacunas as v')
             ->join('queries', 'v.query_id', '=', 'queries.id')
             ->join('users as paciente', 'queries.paciente_id', '=', 'paciente.id')
             ->whereNotNull('v.fecha_siguiente_vacuna')
             ->whereBetween('v.fecha_siguiente_vacuna', [$desde->toDateString(), $hasta->toDateString()])
             ->when($buscar !== '', fn ($q) => $this->filtrarPaciente($q, $buscar))
-            ->orderBy('v.fecha_siguiente_vacuna')
+            ->orderBy($columnas[$orden], $direccion)
             ->select([
                 'v.id',
                 ...$this->columnasPaciente(),
@@ -92,7 +101,7 @@ class RevisarController extends Controller
             ->through(fn ($fila) => $this->fila($fila));
     }
 
-    private function proximasDesparasitaciones(Carbon $desde, Carbon $hasta, string $buscar): LengthAwarePaginator
+    private function proximasDesparasitaciones(Carbon $desde, Carbon $hasta, string $buscar, string $orden, string $direccion): LengthAwarePaginator
     {
         return Query::query()
             ->join('users as paciente', 'queries.paciente_id', '=', 'paciente.id')
@@ -100,7 +109,14 @@ class RevisarController extends Controller
             ->where('queries.fechasigueintedesparasitacion', '<>', '')
             ->whereRaw(self::FORMATO_SQL_DESPARASITACION.' BETWEEN ? AND ?', [$desde->toDateString(), $hasta->toDateString()])
             ->when($buscar !== '', fn ($q) => $this->filtrarPaciente($q, $buscar))
-            ->orderByRaw(self::FORMATO_SQL_DESPARASITACION.' asc')
+            ->when(
+                $orden === 'fecha_proxima',
+                fn ($q) => $q->orderByRaw(self::FORMATO_SQL_DESPARASITACION.' '.$direccion),
+                fn ($q) => $q->orderBy(
+                    $orden === 'detalle' ? 'queries.descripciondesparacitacion' : $this->columnasOrdenables()[$orden],
+                    $direccion,
+                ),
+            )
             ->select([
                 'queries.id',
                 ...$this->columnasPaciente(),
@@ -113,6 +129,36 @@ class RevisarController extends Controller
     }
 
     // -----------------------------------------------------------------
+
+    /** Columnas ordenables comunes a las 3 pestañas (todas parten de "paciente"). */
+    private function columnasOrdenables(): array
+    {
+        return [
+            'rut' => 'paciente.rut',
+            'nombres' => 'paciente.nombres',
+            'apellidos' => 'paciente.apellidos',
+            'telefono' => 'paciente.telefono',
+            'ultima_atencion' => 'paciente.fecha_ult_atencion',
+        ];
+    }
+
+    /** @return array{0: string, 1: string} [orden, direccion] validados */
+    private function resolverOrden(Request $request, string $tipo): array
+    {
+        $permitidas = [...array_keys($this->columnasOrdenables()), 'fecha_proxima'];
+        if ($tipo !== 'citas') {
+            $permitidas[] = 'detalle';
+        }
+
+        $orden = $request->query('orden');
+        $direccion = $request->query('direccion') === 'desc' ? 'desc' : 'asc';
+
+        if (! is_string($orden) || ! in_array($orden, $permitidas, true)) {
+            return ['fecha_proxima', 'asc'];
+        }
+
+        return [$orden, $direccion];
+    }
 
     /** @return array<int, string> */
     private function columnasPaciente(): array

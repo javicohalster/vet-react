@@ -24,7 +24,7 @@ interface EspecialidadFila {
 
 interface EspecialidadesIndexProps {
     especialidades: Paginated<EspecialidadFila>;
-    filtros: { buscar: string };
+    filtros: { buscar: string; orden: string; direccion: 'asc' | 'desc' };
 }
 
 export default function EspecialidadesIndex({ especialidades, filtros }: EspecialidadesIndexProps) {
@@ -34,8 +34,8 @@ export default function EspecialidadesIndex({ especialidades, filtros }: Especia
     const [eliminarId, setEliminarId] = useState<number | null>(null);
 
     const columnas: Column<EspecialidadFila>[] = [
-        { key: 'nombre', label: 'Nombre' },
-        { key: 'doctores', label: 'Doctores', render: (f) => <Badge variant="secondary">{f.doctores}</Badge> },
+        { key: 'nombre', label: 'Nombre', sortKey: 'nombre' },
+        { key: 'doctores', label: 'Doctores', render: (f) => <Badge variant="secondary">{f.doctores}</Badge>, sortKey: 'doctores' },
         { key: 'consultas', label: 'Consultas', render: (f) => <Badge variant="outline">{f.consultas}</Badge> },
         {
             key: 'acciones',
@@ -78,6 +78,8 @@ export default function EspecialidadesIndex({ especialidades, filtros }: Especia
                     columnas={columnas}
                     url="/especialidades"
                     busqueda={filtros.buscar}
+                    orden={filtros.orden}
+                    direccion={filtros.direccion}
                     placeholderBusqueda="Buscar especialidad..."
                     mensajeVacio="No se encontraron especialidades."
                 />

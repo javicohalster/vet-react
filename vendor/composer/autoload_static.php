@@ -632,6 +632,7 @@ class ComposerStaticInit2e594666b56d0f82768c999e6088d4fb
         'App\\Http\\Controllers\\BuscadorController' => __DIR__ . '/../..' . '/app/Http/Controllers/BuscadorController.php',
         'App\\Http\\Controllers\\CitaController' => __DIR__ . '/../..' . '/app/Http/Controllers/CitaController.php',
         'App\\Http\\Controllers\\ClinicaController' => __DIR__ . '/../..' . '/app/Http/Controllers/ClinicaController.php',
+        'App\\Http\\Controllers\\Concerns\\Ordenable' => __DIR__ . '/../..' . '/app/Http/Controllers/Concerns/Ordenable.php',
         'App\\Http\\Controllers\\ConsultaController' => __DIR__ . '/../..' . '/app/Http/Controllers/ConsultaController.php',
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
         'App\\Http\\Controllers\\DoctorController' => __DIR__ . '/../..' . '/app/Http/Controllers/DoctorController.php',

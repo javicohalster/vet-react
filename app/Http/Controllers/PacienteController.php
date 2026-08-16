@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\Ordenable;
 use App\Models\Query;
 use App\Models\Raza;
 use App\Models\Unity;
@@ -24,23 +25,39 @@ use Intervention\Image\ImageManager;
  */
 class PacienteController extends Controller
 {
+    use Ordenable;
+
     /** Id del rol "paciente" en la tabla `roles`. */
     private const ROL_PACIENTE = 4;
+
+    /** Columna visible en la tabla => columna real en `users`. */
+    private const COLUMNAS_ORDENABLES = [
+        'id' => 'id',
+        'rut' => 'rut',
+        'nombres' => 'nombres',
+        'apellidos' => 'apellidos',
+        'telefono' => 'telefono',
+        'edad' => 'nacimiento',
+        'ultima_atencion' => 'fecha_ult_atencion',
+    ];
 
     public function index(Request $request): Response
     {
         $buscar = trim((string) $request->query('buscar', ''));
 
-        $pacientes = User::withRole('paciente')
-            ->when($buscar !== '', fn (Builder $q) => $this->filtrar($q, $buscar))
-            ->orderBy('nombres')
+        $consulta = User::withRole('paciente')
+            ->when($buscar !== '', fn (Builder $q) => $this->filtrar($q, $buscar));
+
+        $orden = $this->aplicarOrden($consulta, $request, self::COLUMNAS_ORDENABLES, 'nombres');
+
+        $pacientes = $consulta
             ->paginate(15)
             ->withQueryString()
             ->through(fn (User $paciente) => $this->fila($paciente));
 
         return Inertia::render('pacientes/index', [
             'pacientes' => $pacientes,
-            'filtros' => ['buscar' => $buscar],
+            'filtros' => ['buscar' => $buscar, ...$orden],
             'razas' => Raza::orderBy('nombre')->get(['id', 'nombre']),
         ]);
     }

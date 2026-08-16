@@ -24,7 +24,7 @@ interface PacienteDocumentos {
 
 interface DocumentosIndexProps {
     pacientes: Paginated<PacienteDocumentos>;
-    filtros: { buscar: string };
+    filtros: { buscar: string; orden: string; direccion: 'asc' | 'desc' };
 }
 
 export default function DocumentosIndex({ pacientes, filtros }: DocumentosIndexProps) {
@@ -32,11 +32,11 @@ export default function DocumentosIndex({ pacientes, filtros }: DocumentosIndexP
     const [consultaId, setConsultaId] = useState<number | null>(null);
 
     const columnas: Column<PacienteDocumentos>[] = [
-        { key: 'rut', label: 'CI' },
-        { key: 'chip', label: 'Chip', render: (f) => f.chip ?? '—' },
-        { key: 'nombres', label: 'Paciente' },
-        { key: 'apellidos', label: 'Propietario' },
-        { key: 'telefono', label: 'Teléfono' },
+        { key: 'rut', label: 'CI', sortKey: 'rut' },
+        { key: 'chip', label: 'Chip', render: (f) => f.chip ?? '—', sortKey: 'chip' },
+        { key: 'nombres', label: 'Paciente', sortKey: 'nombres' },
+        { key: 'apellidos', label: 'Propietario', sortKey: 'apellidos' },
+        { key: 'telefono', label: 'Teléfono', sortKey: 'telefono' },
         { key: 'consultas', label: 'Consultas', render: (f) => <Badge variant="secondary">{f.consultas}</Badge> },
         { key: 'documentos', label: 'Documentos', render: (f) => <Badge variant={f.documentos > 0 ? 'default' : 'outline'}>{f.documentos}</Badge> },
         {
@@ -64,6 +64,8 @@ export default function DocumentosIndex({ pacientes, filtros }: DocumentosIndexP
                     columnas={columnas}
                     url="/documentos-pacientes"
                     busqueda={filtros.buscar}
+                    orden={filtros.orden}
+                    direccion={filtros.direccion}
                     placeholderBusqueda="Buscar por nombre, propietario, CI o chip..."
                     mensajeVacio="No se encontraron pacientes."
                 />

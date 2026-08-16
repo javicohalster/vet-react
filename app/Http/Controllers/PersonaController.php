@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\Ordenable;
 use App\Models\Query;
 use App\Models\Role;
 use App\Models\User;
@@ -19,11 +20,22 @@ use Inertia\Response;
  */
 class PersonaController extends Controller
 {
+    use Ordenable;
+
+    private const COLUMNAS_ORDENABLES = [
+        'rut' => 'rut',
+        'username' => 'username',
+        'nombres' => 'nombres',
+        'apellidos' => 'apellidos',
+        'email' => 'email',
+        'telefono' => 'telefono',
+    ];
+
     public function index(Request $request): Response
     {
         $buscar = trim((string) $request->query('buscar', ''));
 
-        $personas = User::query()
+        $consulta = User::query()
             ->whereHas('roles', fn (Builder $q) => $q->where('roles.name', '!=', 'paciente'))
             ->when($buscar !== '', fn (Builder $q) => $q->where(fn (Builder $s) => $s
                 ->where('nombres', 'like', "%{$buscar}%")
@@ -31,8 +43,11 @@ class PersonaController extends Controller
                 ->orWhere('rut', 'like', "%{$buscar}%")
                 ->orWhere('username', 'like', "%{$buscar}%")
                 ->orWhere('email', 'like', "%{$buscar}%")))
-            ->with('roles:id,name,display_name')
-            ->orderBy('apellidos')
+            ->with('roles:id,name,display_name');
+
+        $orden = $this->aplicarOrden($consulta, $request, self::COLUMNAS_ORDENABLES, 'apellidos');
+
+        $personas = $consulta
             ->paginate(15)
             ->withQueryString()
             ->through(fn (User $persona) => [
@@ -55,7 +70,7 @@ class PersonaController extends Controller
 
         return Inertia::render('personas/index', [
             'personas' => $personas,
-            'filtros' => ['buscar' => $buscar],
+            'filtros' => ['buscar' => $buscar, ...$orden],
             'roles' => Role::orderBy('name')->get(['id', 'name', 'display_name'])
                 ->map(fn (Role $rol) => ['id' => $rol->id, 'nombre' => $rol->display_name ?: $rol->name]),
         ]);
