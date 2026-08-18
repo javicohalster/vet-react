@@ -89,6 +89,7 @@ Route::middleware(['auth', 'role:administrador|doctor|recepcionista'])->group(fu
         Route::get('documentos-importar', [DocumentoImportController::class, 'index'])->name('documentos.importar.index');
         Route::get('documentos-importar/ver/{archivo}', [DocumentoImportController::class, 'ver'])->name('documentos.importar.ver');
         Route::post('documentos-importar/vincular', [DocumentoImportController::class, 'vincular'])->name('documentos.importar.vincular');
+        Route::post('documentos-importar/vincular-automaticos', [DocumentoImportController::class, 'vincularAutomaticos'])->name('documentos.importar.vincular-automaticos');
 
         // Siguientes citas
         Route::get('revisar', [RevisarController::class, 'index'])->name('revisar.index');

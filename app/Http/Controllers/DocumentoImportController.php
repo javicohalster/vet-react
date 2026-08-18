@@ -32,19 +32,60 @@ class DocumentoImportController extends Controller
 
     public function index(): Response
     {
-        $registrados = QueryFile::pluck('file_path')->all();
-
-        $sueltos = collect(Storage::disk(self::DISCO)->files(self::CARPETA))
-            ->map(fn (string $ruta) => basename($ruta))
-            ->diff($registrados)
-            ->values()
-            ->map(fn (string $archivo) => [
-                'archivo' => $archivo,
-                'nombre_legible' => Str::after($archivo, '_') ?: $archivo,
-                'paciente_sugerido' => $this->sugerirPaciente($archivo),
-            ]);
+        $sueltos = $this->archivosSueltos()->map(fn (string $archivo) => [
+            'archivo' => $archivo,
+            'nombre_legible' => Str::after($archivo, '_') ?: $archivo,
+            'paciente_sugerido' => $this->sugerirPaciente($archivo),
+        ]);
 
         return Inertia::render('documentos/importar', ['archivos' => $sueltos]);
+    }
+
+    /**
+     * Vincula de una sola vez todos los archivos sueltos cuyo nombre permite
+     * identificar exactamente un paciente. Si ese paciente tiene una sola
+     * consulta atendida, se usa esa; si tiene varias, se usa la más
+     * reciente (no hay forma de saber cuál de sus visitas es por el nombre
+     * del archivo solo). Los que no se puedan identificar quedan igual en
+     * la lista para elegirlos a mano.
+     */
+    public function vincularAutomaticos(): RedirectResponse
+    {
+        $vinculados = 0;
+        $sinConsulta = 0;
+
+        foreach ($this->archivosSueltos() as $archivo) {
+            $paciente = $this->sugerirPaciente($archivo);
+            if (! $paciente) {
+                continue;
+            }
+
+            $consulta = Query::where('paciente_id', $paciente['id'])
+                ->where('estado', Query::ESTADO_ATENDIDO)
+                ->orderByDesc('fecha_inicio')
+                ->first();
+
+            if (! $consulta) {
+                $sinConsulta++;
+
+                continue;
+            }
+
+            QueryFile::create([
+                'query_id' => $consulta->id,
+                'file_path' => $archivo,
+                'uploaded_at' => now()->toDateString(),
+            ]);
+
+            $vinculados++;
+        }
+
+        $mensaje = "Se vincularon {$vinculados} archivo(s) automáticamente.";
+        if ($sinConsulta > 0) {
+            $mensaje .= " {$sinConsulta} se identificaron pero el paciente no tiene consultas atendidas, así que no se pudieron vincular.";
+        }
+
+        return back()->with('success', $mensaje);
     }
 
     /** Muestra el archivo suelto (para verlo antes de decidir a qué consulta va). */
@@ -84,6 +125,17 @@ class DocumentoImportController extends Controller
     }
 
     // -----------------------------------------------------------------
+
+    /** Nombres de archivo en la carpeta de documentos que no están en query_files. */
+    private function archivosSueltos(): \Illuminate\Support\Collection
+    {
+        $registrados = QueryFile::pluck('file_path')->all();
+
+        return collect(Storage::disk(self::DISCO)->files(self::CARPETA))
+            ->map(fn (string $ruta) => basename($ruta))
+            ->diff($registrados)
+            ->values();
+    }
 
     /**
      * Intenta ubicar al paciente a partir del nombre del archivo. Se han visto
