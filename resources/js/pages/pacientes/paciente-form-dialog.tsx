@@ -110,7 +110,11 @@ export function PacienteFormDialog({ abierto, alCerrar, paciente, razas }: Pacie
         };
 
         if (esEdicion && paciente) {
-            router.put(`/pacientes/${paciente.id}`, datos, opciones);
+            // POST + _method:'put' (no router.put directo): con multipart/form-data
+            // (foto adjunta), PHP no interpreta bien el cuerpo en peticiones PUT/PATCH
+            // reales y los demás campos llegan vacíos al servidor. Es el workaround
+            // que la propia documentación de Inertia recomienda para este caso.
+            router.post(`/pacientes/${paciente.id}`, { ...datos, _method: 'put' }, opciones);
         } else {
             router.post('/pacientes', datos, opciones);
         }
