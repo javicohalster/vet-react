@@ -7,6 +7,7 @@ use App\Http\Controllers\ClinicaController;
 use App\Http\Controllers\ConsultaController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\DocumentoController;
+use App\Http\Controllers\DocumentoImportController;
 use App\Http\Controllers\EspecialidadController;
 use App\Http\Controllers\FichaPublicaController;
 use App\Http\Controllers\LaboratorioController;
@@ -83,6 +84,11 @@ Route::middleware(['auth', 'role:administrador|doctor|recepcionista'])->group(fu
         Route::get('documentos/{consulta}/zip', [DocumentoController::class, 'zip'])->name('documentos.zip');
         Route::get('documentos/archivo/{archivo}', [DocumentoController::class, 'descargar'])->name('documentos.descargar');
         Route::delete('documentos/archivo/{archivo}', [DocumentoController::class, 'destroy'])->name('documentos.destroy');
+
+        // Documentos copiados directo al servidor, sin vincular todavía
+        Route::get('documentos-importar', [DocumentoImportController::class, 'index'])->name('documentos.importar.index');
+        Route::get('documentos-importar/ver/{archivo}', [DocumentoImportController::class, 'ver'])->name('documentos.importar.ver');
+        Route::post('documentos-importar/vincular', [DocumentoImportController::class, 'vincular'])->name('documentos.importar.vincular');
 
         // Siguientes citas
         Route::get('revisar', [RevisarController::class, 'index'])->name('revisar.index');

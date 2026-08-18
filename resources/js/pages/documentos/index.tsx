@@ -5,8 +5,8 @@ import AppLayout from '@/layouts/app-layout';
 import { ConsultasPickerDialog } from '@/pages/documentos/consultas-picker-dialog';
 import { DocumentosDialog } from '@/pages/documentos/documentos-dialog';
 import { type BreadcrumbItem, type Paginated } from '@/types';
-import { Head } from '@inertiajs/react';
-import { FolderOpen } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { FolderOpen, Link2 } from 'lucide-react';
 import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Documentos', href: '/documentos-pacientes' }];
@@ -58,7 +58,14 @@ export default function DocumentosIndex({ pacientes, filtros }: DocumentosIndexP
             <Head title="Documentos" />
 
             <div className="flex flex-col gap-4 p-4">
-                <h1 className="text-2xl font-semibold tracking-tight">Documentos por paciente</h1>
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl font-semibold tracking-tight">Documentos por paciente</h1>
+                    <Button variant="outline" asChild>
+                        <Link href="/documentos-importar">
+                            <Link2 className="h-4 w-4" /> Vincular archivos sueltos
+                        </Link>
+                    </Button>
+                </div>
 
                 <DataTable
                     paginacion={pacientes}
