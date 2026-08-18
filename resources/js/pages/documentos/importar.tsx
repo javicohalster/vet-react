@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/app-layout';
 import axios from '@/lib/http';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Eye, Link2, Loader2, Wand2 } from 'lucide-react';
+import { Eye, Link2, Loader2, ShieldCheck, Wand2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -29,6 +29,7 @@ interface ConsultaOpcion {
 
 export default function ImportarDocumentos({ archivos }: { archivos: ArchivoSuelto[] }) {
     const [vinculandoTodo, setVinculandoTodo] = useState(false);
+    const [corrigiendo, setCorrigiendo] = useState(false);
     const sugeridos = archivos.filter((a) => a.paciente_sugerido).length;
 
     const vincularAutomaticamente = () => {
@@ -39,6 +40,25 @@ export default function ImportarDocumentos({ archivos }: { archivos: ArchivoSuel
             {
                 preserveScroll: true,
                 onFinish: () => setVinculandoTodo(false),
+            },
+        );
+    };
+
+    const corregirVinculados = () => {
+        if (
+            !confirm(
+                'Esto revisa TODOS los archivos ya vinculados (no solo los de esta lista) y corrige los que, según el nombre del archivo, quedaron vinculados al paciente equivocado. ¿Continuar?',
+            )
+        ) {
+            return;
+        }
+        setCorrigiendo(true);
+        router.post(
+            '/documentos-importar/corregir-vinculados',
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setCorrigiendo(false),
             },
         );
     };
@@ -58,12 +78,18 @@ export default function ImportarDocumentos({ archivos }: { archivos: ArchivoSuel
                         </p>
                     </div>
 
-                    {sugeridos > 0 && (
-                        <Button type="button" onClick={vincularAutomaticamente} disabled={vinculandoTodo} className="shrink-0">
-                            {vinculandoTodo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                            Vincular automáticamente ({sugeridos})
+                    <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+                        {sugeridos > 0 && (
+                            <Button type="button" onClick={vincularAutomaticamente} disabled={vinculandoTodo}>
+                                {vinculandoTodo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                                Vincular automáticamente ({sugeridos})
+                            </Button>
+                        )}
+                        <Button type="button" variant="outline" size="sm" onClick={corregirVinculados} disabled={corrigiendo}>
+                            {corrigiendo ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                            Revisar y corregir vínculos existentes
                         </Button>
-                    )}
+                    </div>
                 </div>
 
                 {archivos.length === 0 ? (
