@@ -24,12 +24,21 @@
             'Fecha siguiente cita' => $consulta->fechasiguientecita,
         ];
 
-        $vacunacion = [
-            'Fecha de vacuna' => $consulta->fechavacuna,
-            'Tipo de vacuna' => $consulta->tipovacuna,
-            'Días para revacunar' => $consulta->diasrevacuna,
-            'Fecha siguiente vacuna' => $consulta->fechavacunasiguiente,
-        ];
+        // Una consulta puede tener varias vacunas (lista nueva). Las consultas
+        // de antes de esa función solo tienen el juego de campos sueltos.
+        $vacunas = $consulta->vacunas->isNotEmpty()
+            ? $consulta->vacunas->map(fn ($v) => [
+                'fecha' => $v->fecha_vacuna?->format('d/m/Y'),
+                'tipo' => $v->tipo_vacuna,
+                'dias' => $v->dias_revacunar,
+                'siguiente' => $v->fecha_siguiente_vacuna?->format('d/m/Y'),
+            ])
+            : collect(filled($consulta->tipovacuna) || filled($consulta->fechavacuna) ? [[
+                'fecha' => $consulta->fechavacuna,
+                'tipo' => $consulta->tipovacuna,
+                'dias' => $consulta->diasrevacuna,
+                'siguiente' => $consulta->fechavacunasiguiente,
+            ]] : []);
 
         $desparasitacion = [
             'Fecha de desparasitación' => $consulta->fechadesparasitacion,
@@ -65,7 +74,6 @@
 
         $secciones = [
             'Consulta' => $general,
-            'Vacunación' => $vacunacion,
             'Desparasitación' => $desparasitacion,
             'Cirugía' => $cirugia,
             'Hospitalización' => $hospitalizacion,
@@ -98,6 +106,28 @@
         <tr><td class="etiqueta">Atendido por</td><td>{{ $consulta->doctor?->nombre_completo ?: '—' }}</td></tr>
         <tr><td class="etiqueta">Especialidad</td><td>{{ $consulta->especialidad?->nombre ?: '—' }}</td></tr>
     </table>
+
+    @if ($vacunas->isNotEmpty())
+        <div class="bloque">
+            <h2>Vacunación</h2>
+            <table class="datos">
+                <tr>
+                    <td class="etiqueta">Fecha</td>
+                    <td class="etiqueta">Vacuna</td>
+                    <td class="etiqueta">Días para revacunar</td>
+                    <td class="etiqueta">Fecha siguiente</td>
+                </tr>
+                @foreach ($vacunas as $v)
+                    <tr>
+                        <td>{{ $v['fecha'] ?: '—' }}</td>
+                        <td>{{ $v['tipo'] ?: '—' }}</td>
+                        <td>{{ $v['dias'] ?: '—' }}</td>
+                        <td>{{ $v['siguiente'] ?: '—' }}</td>
+                    </tr>
+                @endforeach
+            </table>
+        </div>
+    @endif
 
     @foreach ($secciones as $titulo => $campos)
         @php $conDatos = array_filter($campos, fn ($valor) => filled($valor)); @endphp

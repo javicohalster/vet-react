@@ -118,7 +118,7 @@ class PacienteController extends Controller
     {
         $consultas = Query::where('paciente_id', $paciente->id)
             ->where('estado', Query::ESTADO_ATENDIDO)
-            ->with(['doctor:id,nombres,apellidos', 'especialidad:id,nombre'])
+            ->with(['doctor:id,nombres,apellidos', 'especialidad:id,nombre', 'vacunas'])
             ->withCount('archivos')
             ->orderByDesc('fecha_inicio')
             ->get()
@@ -137,8 +137,21 @@ class PacienteController extends Controller
                 'observaciones' => $consulta->observaciones,
                 'temperatura' => $consulta->temperatura,
                 'peso' => $consulta->peso,
+                // Vacuna "suelta" heredada: solo se usa si la consulta no tiene
+                // filas en la lista nueva (consultas de antes de esa función).
                 'tipovacuna' => $consulta->tipovacuna,
                 'fechavacuna' => $consulta->fechavacuna,
+                'fechavacunasiguiente' => $consulta->fechavacunasiguiente,
+                'vacunas' => $consulta->vacunas->map(fn ($v) => [
+                    'fecha' => $v->fecha_vacuna?->format('d/m/Y'),
+                    'tipo' => $v->tipo_vacuna,
+                    'fecha_siguiente' => $v->fecha_siguiente_vacuna?->format('d/m/Y'),
+                ])->values(),
+                'fechadesparasitacion' => $consulta->fechadesparasitacion,
+                'descripciondesparacitacion' => $consulta->descripciondesparacitacion,
+                'posologia' => $consulta->posologia,
+                'dosis' => $consulta->dosis,
+                'fechasigueintedesparasitacion' => $consulta->fechasigueintedesparasitacion,
                 'fechasiguientecita' => $consulta->fechasiguientecita,
                 'procedimientocirugia' => $consulta->procedimientocirugia,
                 'diagnosticohospitalizar' => $consulta->diagnosticohospitalizar,
@@ -170,7 +183,7 @@ class PacienteController extends Controller
     {
         abort_unless($consulta->paciente_id === $paciente->id, 404);
 
-        $consulta->load(['doctor:id,nombres,apellidos,titulo', 'especialidad:id,nombre']);
+        $consulta->load(['doctor:id,nombres,apellidos,titulo', 'especialidad:id,nombre', 'vacunas']);
 
         $pdf = Pdf::loadView('pdf.expediente', [
             'paciente' => $paciente,

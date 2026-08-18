@@ -21,6 +21,13 @@ interface ConsultaExpediente {
     peso: string | null;
     tipovacuna: string | null;
     fechavacuna: string | null;
+    fechavacunasiguiente: string | null;
+    vacunas: { fecha: string | null; tipo: string | null; fecha_siguiente: string | null }[];
+    fechadesparasitacion: string | null;
+    descripciondesparacitacion: string | null;
+    posologia: string | null;
+    dosis: string | null;
+    fechasigueintedesparasitacion: string | null;
     fechasiguientecita: string | null;
     procedimientocirugia: string | null;
     diagnosticohospitalizar: string | null;
@@ -91,7 +98,40 @@ export function EspedienteDialog({ pacienteId, onClose }: { pacienteId: number |
                                     <Campo etiqueta="Indicaciones" valor={c.receta} />
                                     <Campo etiqueta="Observaciones" valor={c.observaciones} />
                                     <Campo etiqueta="Peso / Temperatura" valor={[c.peso, c.temperatura].filter(Boolean).join(' / ') || null} />
-                                    <Campo etiqueta="Vacuna" valor={c.tipovacuna ? `${c.tipovacuna} (${c.fechavacuna ?? '—'})` : null} />
+
+                                    {c.vacunas.length > 0 ? (
+                                        <div className="sm:col-span-2">
+                                            <dt className="text-xs tracking-wide text-muted-foreground uppercase">Vacunas</dt>
+                                            <dd>
+                                                {c.vacunas.map((v, i) => (
+                                                    <div key={i}>
+                                                        {v.tipo ?? '—'} ({v.fecha ?? '—'}
+                                                        {v.fecha_siguiente ? ` · siguiente: ${v.fecha_siguiente}` : ''})
+                                                    </div>
+                                                ))}
+                                            </dd>
+                                        </div>
+                                    ) : (
+                                        <Campo
+                                            etiqueta="Vacuna"
+                                            valor={
+                                                c.tipovacuna
+                                                    ? `${c.tipovacuna} (${c.fechavacuna ?? '—'}${c.fechavacunasiguiente ? ` · siguiente: ${c.fechavacunasiguiente}` : ''})`
+                                                    : null
+                                            }
+                                        />
+                                    )}
+
+                                    <Campo
+                                        etiqueta="Desparasitación"
+                                        valor={
+                                            c.descripciondesparacitacion || c.fechadesparasitacion
+                                                ? `${c.descripciondesparacitacion ?? '—'} (${c.fechadesparasitacion ?? '—'}${c.fechasigueintedesparasitacion ? ` · siguiente: ${c.fechasigueintedesparasitacion}` : ''})`
+                                                : null
+                                        }
+                                    />
+                                    <Campo etiqueta="Posología / Dosis" valor={[c.posologia, c.dosis].filter(Boolean).join(' / ') || null} />
+
                                     <Campo etiqueta="Cirugía" valor={c.procedimientocirugia} />
                                     <Campo etiqueta="Hospitalización" valor={c.diagnosticohospitalizar} />
                                     <Campo etiqueta="Próxima cita" valor={c.fechasiguientecita} />
