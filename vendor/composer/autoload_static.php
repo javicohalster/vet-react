@@ -637,6 +637,7 @@ class ComposerStaticInit2e594666b56d0f82768c999e6088d4fb
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
         'App\\Http\\Controllers\\DoctorController' => __DIR__ . '/../..' . '/app/Http/Controllers/DoctorController.php',
         'App\\Http\\Controllers\\DocumentoController' => __DIR__ . '/../..' . '/app/Http/Controllers/DocumentoController.php',
+        'App\\Http\\Controllers\\DocumentoImportController' => __DIR__ . '/../..' . '/app/Http/Controllers/DocumentoImportController.php',
         'App\\Http\\Controllers\\EspecialidadController' => __DIR__ . '/../..' . '/app/Http/Controllers/EspecialidadController.php',
         'App\\Http\\Controllers\\FichaPublicaController' => __DIR__ . '/../..' . '/app/Http/Controllers/FichaPublicaController.php',
         'App\\Http\\Controllers\\LaboratorioController' => __DIR__ . '/../..' . '/app/Http/Controllers/LaboratorioController.php',
