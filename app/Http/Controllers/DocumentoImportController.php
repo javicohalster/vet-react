@@ -86,25 +86,31 @@ class DocumentoImportController extends Controller
     // -----------------------------------------------------------------
 
     /**
-     * Intenta ubicar al paciente a partir del nombre del archivo (patrón
-     * "uuid_propietario-pcte-paciente.ext"). Solo sugiere si encuentra
-     * exactamente un paciente que calce; si hay varios o ninguno, se deja
-     * en blanco para elegirlo a mano.
+     * Intenta ubicar al paciente a partir del nombre del archivo. Se han visto
+     * dos patrones distintos: "uuid_propietario-pcte-paciente.ext" (subida
+     * desde la app) y "id-corto_Propietario_Nombre_PCTE_Paciente.ext" (copiado
+     * a mano, con guion bajo y mayúsculas). Solo sugiere si encuentra
+     * exactamente un paciente que calce; si hay varios o ninguno, se deja en
+     * blanco para elegirlo a mano.
      *
      * @return array<string, mixed>|null
      */
     private function sugerirPaciente(string $archivo): ?array
     {
         $sinExtension = pathinfo($archivo, PATHINFO_FILENAME);
-        $sinUuid = preg_replace('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_/i', '', $sinExtension);
 
-        if (! $sinUuid || ! str_contains($sinUuid, '-pcte-')) {
+        // Quita el identificador del inicio: un uuid completo (con guiones) o
+        // un id corto tipo uniqid() (solo caracteres hexadecimales).
+        $sinPrefijo = preg_replace('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_/i', '', $sinExtension);
+        $sinPrefijo = preg_replace('/^[0-9a-f]{6,}_/i', '', $sinPrefijo);
+
+        // Separador "pcte" con guion o guion bajo, sin importar mayúsculas.
+        if (! preg_match('/^(.+?)[_-]pcte[_-](.+)$/i', $sinPrefijo, $partes)) {
             return null;
         }
 
-        [$propietarioSlug, $pacienteSlug] = explode('-pcte-', $sinUuid, 2);
-        $propietario = trim(str_replace('-', ' ', $propietarioSlug));
-        $paciente = trim(str_replace('-', ' ', $pacienteSlug));
+        $propietario = trim(str_replace(['-', '_'], ' ', $partes[1]));
+        $paciente = trim(str_replace(['-', '_'], ' ', $partes[2]));
 
         $candidatos = User::withRole('paciente')
             ->where('apellidos', 'like', "%{$propietario}%")
