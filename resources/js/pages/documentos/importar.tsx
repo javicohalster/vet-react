@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/app-layout';
 import axios from '@/lib/http';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Eye, Link2, Loader2 } from 'lucide-react';
+import { Eye, Link2, Loader2, Wand2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -28,18 +28,42 @@ interface ConsultaOpcion {
 }
 
 export default function ImportarDocumentos({ archivos }: { archivos: ArchivoSuelto[] }) {
+    const [vinculandoTodo, setVinculandoTodo] = useState(false);
+    const sugeridos = archivos.filter((a) => a.paciente_sugerido).length;
+
+    const vincularAutomaticamente = () => {
+        setVinculandoTodo(true);
+        router.post(
+            '/documentos-importar/vincular-automaticos',
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setVinculandoTodo(false),
+            },
+        );
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Vincular archivos sueltos" />
 
             <div className="flex flex-col gap-4 p-4">
-                <div>
-                    <h1 className="text-2xl font-semibold tracking-tight">Vincular archivos sueltos</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Archivos que aparecieron en la carpeta de documentos pero que todavía no están vinculados a ninguna consulta
-                        (por ejemplo, porque se copiaron directo por el administrador de archivos en vez de subirlos desde la app).
-                        Revisa el PDF si el nombre no es suficiente para saber a quién pertenece.
-                    </p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-semibold tracking-tight">Vincular archivos sueltos</h1>
+                        <p className="text-sm text-muted-foreground">
+                            Archivos que aparecieron en la carpeta de documentos pero que todavía no están vinculados a ninguna consulta
+                            (por ejemplo, porque se copiaron directo por el administrador de archivos en vez de subirlos desde la app).
+                            Revisa el PDF si el nombre no es suficiente para saber a quién pertenece.
+                        </p>
+                    </div>
+
+                    {sugeridos > 0 && (
+                        <Button type="button" onClick={vincularAutomaticamente} disabled={vinculandoTodo} className="shrink-0">
+                            {vinculandoTodo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                            Vincular automáticamente ({sugeridos})
+                        </Button>
+                    )}
                 </div>
 
                 {archivos.length === 0 ? (
