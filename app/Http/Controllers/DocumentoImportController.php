@@ -88,6 +88,59 @@ class DocumentoImportController extends Controller
         return back()->with('success', $mensaje);
     }
 
+    /**
+     * Revisa TODOS los archivos que ya están vinculados (no solo los sueltos)
+     * y, para los que el nombre permite identificar un único paciente,
+     * verifica que estén vinculados a una consulta de ese mismo paciente.
+     * Si no coincide (por ejemplo, quedaron vinculados a mano al paciente
+     * equivocado antes de que existiera la vinculación automática), los
+     * corrige a la consulta atendida más reciente del paciente correcto.
+     * Los archivos sin patrón reconocible en el nombre no se tocan.
+     */
+    public function corregirVinculados(): RedirectResponse
+    {
+        $revisados = 0;
+        $corregidos = 0;
+        $sinCambios = 0;
+        $sinConsulta = 0;
+
+        QueryFile::with('consulta')->get()->each(function (QueryFile $archivo) use (&$revisados, &$corregidos, &$sinCambios, &$sinConsulta) {
+            $paciente = $this->sugerirPaciente($archivo->file_path);
+            if (! $paciente) {
+                return; // el nombre no permite identificar un paciente único, no se toca
+            }
+
+            $revisados++;
+
+            if ($archivo->consulta?->paciente_id === $paciente['id']) {
+                $sinCambios++;
+
+                return; // ya está vinculado al paciente correcto
+            }
+
+            $consultaCorrecta = Query::where('paciente_id', $paciente['id'])
+                ->where('estado', Query::ESTADO_ATENDIDO)
+                ->orderByDesc('fecha_inicio')
+                ->first();
+
+            if (! $consultaCorrecta) {
+                $sinConsulta++;
+
+                return;
+            }
+
+            $archivo->update(['query_id' => $consultaCorrecta->id]);
+            $corregidos++;
+        });
+
+        $mensaje = "Se revisaron {$revisados} archivo(s) con nombre reconocible: {$corregidos} corregido(s), {$sinCambios} ya estaban bien vinculados.";
+        if ($sinConsulta > 0) {
+            $mensaje .= " {$sinConsulta} no se pudieron corregir porque el paciente correcto no tiene consultas atendidas.";
+        }
+
+        return back()->with('success', $mensaje);
+    }
+
     /** Muestra el archivo suelto (para verlo antes de decidir a qué consulta va). */
     public function ver(string $archivo): StreamedResponse
     {
