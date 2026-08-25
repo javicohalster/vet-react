@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import axios from '@/lib/http';
 import { Download, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
 interface FichaPaciente {
@@ -32,6 +32,40 @@ export function FichaDialog({ pacienteId, onClose }: { pacienteId: number | null
     const [cargando, setCargando] = useState(false);
     const [paciente, setPaciente] = useState<FichaPaciente | null>(null);
     const [urlQr, setUrlQr] = useState('');
+    const qrRef = useRef<HTMLButtonElement>(null);
+
+    const descargarQr = () => {
+        const svg = qrRef.current?.querySelector('svg');
+        if (!svg || !paciente) return;
+
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const svgUrl = URL.createObjectURL(new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' }));
+
+        const img = new Image();
+        img.onload = () => {
+            const escala = 8;
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width * escala;
+            canvas.height = img.height * escala;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            }
+            URL.revokeObjectURL(svgUrl);
+
+            canvas.toBlob((blob) => {
+                if (!blob) return;
+                const enlace = document.createElement('a');
+                enlace.href = URL.createObjectURL(blob);
+                enlace.download = `qr-paciente-${paciente.id}.png`;
+                enlace.click();
+                URL.revokeObjectURL(enlace.href);
+            });
+        };
+        img.src = svgUrl;
+    };
 
     useEffect(() => {
         if (!pacienteId) {
@@ -68,9 +102,15 @@ export function FichaDialog({ pacienteId, onClose }: { pacienteId: number | null
                                 alt={paciente.nombres}
                                 className="h-28 w-28 rounded-full border object-cover"
                             />
-                            <div className="rounded border bg-white p-2">
+                            <button
+                                ref={qrRef}
+                                type="button"
+                                onClick={descargarQr}
+                                title="Clic para descargar el código QR"
+                                className="rounded border bg-white p-2 transition-opacity hover:opacity-75"
+                            >
                                 <QRCodeSVG value={urlQr} size={110} />
-                            </div>
+                            </button>
                         </div>
 
                         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:col-span-2">
